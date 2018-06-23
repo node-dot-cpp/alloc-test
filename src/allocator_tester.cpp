@@ -127,7 +127,7 @@ int main()
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
 	{
 		TestRes& tr = testRes[threadCount];
-		printf( "%zd,%zd,%zd,%zd\n", threadCount, tr.duration );
+		printf( "%zd,%zd\n", threadCount, tr.duration );
 		printf( "Per-thread stats:\n" );
 		for ( size_t i=0;i<threadCount;++i )
 		{
@@ -136,43 +136,14 @@ int main()
 		}
 	}
 	printf( "\n" );
-
-/*	printf( "Test summary:\n" );
-	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-	{
-		TestRes& tr = testRes[threadCount];
-		if ( params.startupParams.allocatorType == TRY_ALL )
-			printf( "%zd,%zd,%zd,%zd,%f\n", threadCount, tr.durEmpty, tr.durNewDel, tr.durPerThreadAlloc, (tr.durNewDel - tr.durEmpty) * 1. / (tr.durPerThreadAlloc - tr.durEmpty) );
-		else
-			printf( "%zd,%zd,%zd,%zd\n", threadCount, tr.durEmpty, tr.durNewDel, tr.durPerThreadAlloc );
-		printf( "Per-thread stats:\n" );
-		for ( size_t i=0;i<threadCount;++i )
-		{
-			printf( "   %zd:\n", i );
-			if ( params.startupParams.allocatorType & USE_EMPTY_TEST )
-				printThreadStats( "\t", tr.threadResEmpty[i] );
-			if ( params.startupParams.allocatorType & USE_NEW_DELETE )
-				printThreadStats( "\t", tr.threadResNewDel[i] );
-			if ( params.startupParams.allocatorType & USE_PER_THREAD_ALLOCATOR )
-				printThreadStatsEx( "\t", tr.threadResPerThreadAlloc[i] );
-		}
-	}
-	printf( "\n" );
-
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE:\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-		if ( params.startupParams.allocatorType == TRY_ALL )
-			printf( "%zd,%zd,%zd,%zd,%f\n", threadCount, testRes[threadCount].durEmpty, testRes[threadCount].durNewDel, testRes[threadCount].durPerThreadAlloc, (testRes[threadCount].durNewDel - testRes[threadCount].durEmpty) * 1. / (testRes[threadCount].durPerThreadAlloc - testRes[threadCount].durEmpty) );
-		else
-			printf( "%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].durEmpty, testRes[threadCount].durNewDel, testRes[threadCount].durPerThreadAlloc );
+			printf( "%zd,%zd\n", threadCount, testRes[threadCount].duration );
 
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-		if ( params.startupParams.allocatorType == TRY_ALL )
-			printf( "%zd,%zd,%zd,%zd,%f\n", threadCount, testRes[threadCount].cumulativeDurEmpty, testRes[threadCount].cumulativeDurNewDel, testRes[threadCount].cumulativeDurPerThreadAlloc, (testRes[threadCount].cumulativeDurNewDel - testRes[threadCount].cumulativeDurEmpty) * 1. / (testRes[threadCount].cumulativeDurPerThreadAlloc - testRes[threadCount].cumulativeDurEmpty) );
-		else
-			printf( "%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].cumulativeDurEmpty, testRes[threadCount].cumulativeDurNewDel, testRes[threadCount].cumulativeDurPerThreadAlloc );
-*/
+			printf( "%zd,%zd\n", threadCount, testRes[threadCount].cumulativeDuration );
+
 	return 0;
 }
 
