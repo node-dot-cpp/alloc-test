@@ -109,8 +109,8 @@ int main()
 	memset( testRes, 0, sizeof( testRes ) );
 
 	TestStartupParamsAndResults params;
-	params.startupParams.iterCount = 10000;//0000;
-	params.startupParams.maxItemSize = 8;
+	params.startupParams.iterCount = 100000000;
+	params.startupParams.maxItemSize = 16;
 //		params.startupParams.maxItems = 23 << 20;
 	params.startupParams.mat = MEM_ACCESS_TYPE::full;
 
@@ -118,7 +118,7 @@ int main()
 
 	for ( params.startupParams.threadCount=1; params.startupParams.threadCount<=threadCountMax; ++(params.startupParams.threadCount) )
 	{
-		params.startupParams.maxItems = (1 << 24) / params.startupParams.threadCount;
+		params.startupParams.maxItems = (1 << 25) / params.startupParams.threadCount;
 		params.testRes = testRes + params.startupParams.threadCount;
 		runTest( &params );
 	}
