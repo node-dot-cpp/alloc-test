@@ -185,7 +185,6 @@ template< class AllocatorUnderTest, MEM_ACCESS_TYPE mat>
 void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID )
 {
 	constexpr bool doMemAccess = mat != MEM_ACCESS_TYPE::none;
-	constexpr bool doFullAccess = mat == MEM_ACCESS_TYPE::full;
 //	printf( "rnd_seed = %zd, iterCount = %zd, maxItems = %zd, maxItemSizeExp = %zd\n", rnd_seed, iterCount, maxItems, maxItemSizeExp );
 	allocatorUnderTest.init( threadID );
 
@@ -224,7 +223,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 				baseBuff[i*32+j].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
 				if constexpr ( doMemAccess )
 				{
-					if constexpr ( doFullAccess )
+					if constexpr ( mat == MEM_ACCESS_TYPE::full )
 						memset( baseBuff[i*32+j].ptr, (uint8_t)sz, sz );
 					else
 					{
@@ -248,7 +247,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 		{
 			if constexpr ( doMemAccess )
 			{
-				if constexpr ( doFullAccess )
+				if constexpr ( mat == MEM_ACCESS_TYPE::full )
 				{
 					size_t i=0;
 					for ( ; i<baseBuff[idx].sz/sizeof(size_t ); ++i )
@@ -273,7 +272,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 			baseBuff[idx].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
 			if constexpr ( doMemAccess )
 			{
-				if constexpr ( doFullAccess )
+				if constexpr ( mat == MEM_ACCESS_TYPE::full )
 					memset( baseBuff[idx].ptr, (uint8_t)sz, sz );
 				else
 				{
@@ -291,7 +290,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 		{
 			if constexpr ( doMemAccess )
 			{
-				if constexpr ( doFullAccess )
+				if constexpr ( mat == MEM_ACCESS_TYPE::full )
 				{
 					size_t i=0;
 					for ( ; i<baseBuff[idx].sz/sizeof(size_t ); ++i )

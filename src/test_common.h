@@ -35,10 +35,12 @@
 #ifndef ALLOCATOR_TEST_COMMON_H
 #define ALLOCATOR_TEST_COMMON_H
 
+#include <memory>
 #include <cstdint>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #if _MSC_VER
 #include <intrin.h>
@@ -46,6 +48,7 @@
 #define NOINLINE      __declspec(noinline)
 #define FORCE_INLINE	__forceinline
 #elif __GNUC__
+#include <x86intrin.h>
 #define ALIGN(n)      __attribute__ ((aligned(n))) 
 #define NOINLINE      __attribute__ ((noinline))
 #define	FORCE_INLINE inline __attribute__((always_inline))
