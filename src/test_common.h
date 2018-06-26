@@ -61,6 +61,7 @@
 
 int64_t GetMicrosecondCount();
 size_t GetMillisecondCount();
+size_t getRss();
 
 constexpr size_t max_threads = 32;
 

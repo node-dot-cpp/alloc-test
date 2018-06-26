@@ -99,3 +99,36 @@ size_t GetMillisecondCount()
 #endif
     return now;
 }
+
+#ifdef _MSC_VER
+#include <psapi.h>
+size_t getRss()
+{
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS pmc;
+	hProcess = GetCurrentProcess();
+	BOOL ok = GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc));
+    CloseHandle( hProcess );
+    if ( ok )
+		return pmc.PagefileUsage >> 12; // note: we may also be interested in 'PeakPagefileUsage'
+	else
+		return 0;
+}
+#else
+size_t getRss()
+{
+	// see http://man7.org/linux/man-pages/man5/proc.5.html for details
+	FILE* fstats = fopen( "/proc/self/statm", "rb" );
+	constexpr size_t buffsz = 0x1000;
+	char buff[buffsz];
+	buff[buffsz-1] = 0;
+	fread( buff, 1, buffsz-1, fstats);
+	fclose( fstats);
+	printf( "full set:\n%s\n\n", buff );
+	const char* pos = buff;
+	while ( *pos && *pos == ' ' ) ++pos;
+	while ( *pos && *pos != ' ' ) ++pos;
+	return atol( pos );
+}
+#endif
+
