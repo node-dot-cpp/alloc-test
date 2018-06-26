@@ -77,6 +77,8 @@ struct ThreadTestRes
 	uint64_t rdtscSetup;
 	uint64_t rdtscMainLoop;
 	uint64_t rdtscExit;
+
+	size_t rssMax;
 };
 
 inline
@@ -90,6 +92,7 @@ struct TestRes
 {
 	size_t duration;
 	size_t cumulativeDuration;
+	size_t rssMax;
 	ThreadTestRes threadRes[max_threads];
 };
 

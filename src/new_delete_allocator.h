@@ -41,7 +41,6 @@
 class NewDeleteAllocatorForTest
 {
 	ThreadTestRes* testRes;
-	size_t start;
 
 public:
 	NewDeleteAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; }
@@ -49,25 +48,17 @@ public:
 
 	static constexpr const char* name() { return "new-delete allocator"; }
 
-	void init( size_t threadID )
-	{
-		start = GetMillisecondCount();
-		testRes->threadID = threadID; // just as received
-		testRes->rdtscBegin = __rdtsc();
-	}
-
+	void init() {}
 	void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
 	void deallocate( void* ptr ) { delete [] reinterpret_cast<uint8_t*>(ptr); }
-
 	void deinit() {}
 
-	void doWhateverAfterSetupPhase() { testRes->rdtscSetup = __rdtsc(); }
-	void doWhateverAfterMainLoopPhase() { testRes->rdtscMainLoop = __rdtsc(); }
-	void doWhateverAfterCleanupPhase()
-	{
-		testRes->rdtscExit = __rdtsc();
-		testRes->innerDur = GetMillisecondCount() - start;
-	}
+	// next calls are to get additional stats of the allocator, etc, if desired
+	void doWhateverAfterSetupPhase() {}
+	void doWhateverAfterMainLoopPhase() {}
+	void doWhateverAfterCleanupPhase() {}
+
+	ThreadTestRes* getTestRes() { return testRes; }
 };
 
 

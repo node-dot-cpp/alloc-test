@@ -40,37 +40,30 @@
 
 class VoidAllocatorForTest
 {
-	CommonTestResults* testRes;
-	size_t start;
+	ThreadTestRes* testRes;
 	uint8_t* fakeBuffer = nullptr;
 	static constexpr size_t fakeBufferSize = 0x1000000;
 
 public:
-	VoidAllocatorForTest( CommonTestResults* testRes_ ) { testRes = testRes_; }
+	VoidAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; }
 	static constexpr bool isFake() { return true; } // thus indicating that certain checks over allocated memory should be ommited
 
 	static constexpr const char* name() { return "void allocator"; }
 
-	void init( size_t threadID )
+	void init()
 	{
-		start = GetMillisecondCount();
-		testRes->threadID = threadID; // just as received
-		testRes->rdtscBegin = __rdtsc();
 		fakeBuffer = new uint8_t [fakeBufferSize];
 	}
-
 	void* allocate( size_t sz ) { assert( sz <= fakeBufferSize ); return fakeBuffer; }
 	void deallocate( void* ptr ) {}
-
 	void deinit() { if ( fakeBuffer ) delete [] fakeBuffer; fakeBuffer = nullptr; }
 
-	void doWhateverAfterSetupPhase() { testRes->rdtscSetup = __rdtsc(); }
-	void doWhateverAfterMainLoopPhase() { testRes->rdtscMainLoop = __rdtsc(); }
-	void doWhateverAfterCleanupPhase()
-	{
-		testRes->rdtscExit = __rdtsc();
-		testRes->innerDur = GetMillisecondCount() - start;
-	}
+	// next calls are to get additional stats of the allocator, etc, if desired
+	void doWhateverAfterSetupPhase() {}
+	void doWhateverAfterMainLoopPhase() {}
+	void doWhateverAfterCleanupPhase() {}
+
+	ThreadTestRes* getTestRes() { return testRes; }
 };
 
 

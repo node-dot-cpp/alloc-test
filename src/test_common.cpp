@@ -124,7 +124,6 @@ size_t getRss()
 	buff[buffsz-1] = 0;
 	fread( buff, 1, buffsz-1, fstats);
 	fclose( fstats);
-	printf( "full set:\n%s\n\n", buff );
 	const char* pos = buff;
 	while ( *pos && *pos == ' ' ) ++pos;
 	while ( *pos && *pos != ' ' ) ++pos;
