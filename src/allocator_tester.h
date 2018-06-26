@@ -191,6 +191,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	allocatorUnderTest.getTestRes()->rdtscBegin = __rdtsc();
 
 	size_t start = GetMillisecondCount();
+	size_t allocatedSz = 0;
 
 	size_t dummyCtr = 0;
 	size_t rssMax = 0;
@@ -212,6 +213,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	else
 		baseBuff = new TestBin [ maxItems ]; // just using standard allocator
 	assert( baseBuff );
+	allocatedSz +=  maxItems * sizeof(TestBin);
 	memset( baseBuff, 0, maxItems * sizeof( TestBin ) );
 
 	// setup (saturation)
@@ -235,10 +237,12 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						baseBuff[i*32+j].ptr[sz/2] = (uint8_t)sz;
 					}
 				}
+				allocatedSz += sz;
 			}
 	}
 	allocatorUnderTest.doWhateverAfterSetupPhase();
 	allocatorUnderTest.getTestRes()->rdtscSetup = __rdtsc();
+	allocatorUnderTest.getTestRes()->allocatedAfterSetupSz = allocatedSz;
 
 	rss = getRss();
 	if ( rssMax < rss ) rssMax = rss;
