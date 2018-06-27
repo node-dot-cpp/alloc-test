@@ -67,6 +67,8 @@ constexpr size_t max_threads = 32;
 
 enum MEM_ACCESS_TYPE { none, single, full };
 
+#define COLLECT_USER_MAX_ALLOCATED
+
 struct ThreadTestRes
 {
 	size_t threadID;
@@ -80,6 +82,9 @@ struct ThreadTestRes
 
 	size_t rssMax;
 	size_t allocatedAfterSetupSz;
+#ifdef COLLECT_USER_MAX_ALLOCATED
+	size_t allocatedMax;
+#endif
 };
 
 inline
@@ -95,6 +100,9 @@ struct TestRes
 	size_t cumulativeDuration;
 	size_t rssMax;
 	size_t allocatedAfterSetupSz;
+#ifdef COLLECT_USER_MAX_ALLOCATED
+	size_t allocatedMax;
+#endif
 	ThreadTestRes threadRes[max_threads];
 };
 

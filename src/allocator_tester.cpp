@@ -98,10 +98,12 @@ void runTest( TestStartupParamsAndResults* startupParams )
 	startupParams->testRes->cumulativeDuration = 0;
 	startupParams->testRes->rssMax = 0;
 	startupParams->testRes->allocatedAfterSetupSz = 0;
+	startupParams->testRes->allocatedMax = 0;
 	for ( size_t i=0; i<threadCount; ++i )
 	{
 		startupParams->testRes->cumulativeDuration += startupParams->testRes->threadRes[i].innerDur;
 		startupParams->testRes->allocatedAfterSetupSz += startupParams->testRes->threadRes[i].allocatedAfterSetupSz;
+		startupParams->testRes->allocatedMax += startupParams->testRes->threadRes[i].allocatedMax;
 		if ( startupParams->testRes->rssMax < startupParams->testRes->threadRes[i].rssMax )
 			startupParams->testRes->rssMax = startupParams->testRes->threadRes[i].rssMax;
 	}
@@ -144,11 +146,11 @@ int main()
 	printf( "\n" );
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE:\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-			printf( "%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].duration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz );
+			printf( "%zd,%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].duration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz, testRes[threadCount].allocatedMax );
 
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-			printf( "%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].cumulativeDuration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz );
+			printf( "%zd,%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].cumulativeDuration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz, testRes[threadCount].allocatedMax );
 
 	return 0;
 }

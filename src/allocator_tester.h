@@ -191,11 +191,12 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	allocatorUnderTest.getTestRes()->rdtscBegin = __rdtsc();
 
 	size_t start = GetMillisecondCount();
-	size_t allocatedSz = 0;
 
 	size_t dummyCtr = 0;
 	size_t rssMax = 0;
 	size_t rss;
+	size_t allocatedSz = 0;
+	size_t allocatedSzMax = 0;
 
 	Pareto_80_20_6_Data paretoData;
 	assert( maxItems <= UINT32_MAX );
@@ -276,6 +277,9 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						dummyCtr += baseBuff[idx].ptr[baseBuff[idx].sz/2];
 					}
 				}
+#ifdef COLLECT_USER_MAX_ALLOCATED
+				allocatedSz -= baseBuff[idx].sz;
+#endif
 				allocatorUnderTest.deallocate( baseBuff[idx].ptr );
 				baseBuff[idx].ptr = 0;
 			}
@@ -294,6 +298,11 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						baseBuff[idx].ptr[sz/2] = (uint8_t)sz;
 					}
 				}
+#ifdef COLLECT_USER_MAX_ALLOCATED
+				allocatedSz += sz;
+				if ( allocatedSzMax < allocatedSz )
+					allocatedSzMax = allocatedSz;
+#endif
 			}
 		}
 		rss = getRss();
@@ -301,6 +310,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	}
 	allocatorUnderTest.doWhateverAfterMainLoopPhase();
 	allocatorUnderTest.getTestRes()->rdtscMainLoop = __rdtsc();
+	allocatorUnderTest.getTestRes()->allocatedMax = allocatedSzMax;
 
 	// exit
 	for ( size_t idx=0; idx<maxItems; ++idx )
