@@ -51,6 +51,7 @@
 #endif
 
 #include "test_common.h"
+#include "void_allocator.h" // used as an estimation of the cost of test itself
 
 
 extern thread_local unsigned long long rnd_seed;
@@ -184,6 +185,8 @@ size_t Pareto_80_20_6_Rand( const Pareto_80_20_6_Data& data, uint32_t rnum1, uin
 template< class AllocatorUnderTest, MEM_ACCESS_TYPE mat>
 void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID )
 {
+	static constexpr const char* memAccessTypeStr = mat == MEM_ACCESS_TYPE::none ? "none" : ( mat == MEM_ACCESS_TYPE::single ? "single" : ( mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
+	printf( "    running thread %zd with \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s,  [rnd_seed = %llu] ...\n", threadID, allocatorUnderTest.name(), maxItemSizeExp, maxItems, iterCount, memAccessTypeStr, rnd_seed );
 	constexpr bool doMemAccess = mat != MEM_ACCESS_TYPE::none;
 //	printf( "rnd_seed = %zd, iterCount = %zd, maxItems = %zd, maxItemSizeExp = %zd\n", rnd_seed, iterCount, maxItems, maxItemSizeExp );
 	allocatorUnderTest.init();

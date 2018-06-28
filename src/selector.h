@@ -40,8 +40,6 @@
 // (2) define MyAllocatorT properly
 // (3) make sure other inclusions and/or definitions are removed or commented out :)
 
-//#include "void_allocator.h"
-//typedef VoidAllocatorForTest MyAllocatorT;
 
 #include "new_delete_allocator.h"
 typedef NewDeleteAllocatorForTest MyAllocatorT;

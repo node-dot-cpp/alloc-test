@@ -37,29 +37,29 @@
 thread_local unsigned long long rnd_seed = 0;
 
 
-
+template<class Allocator>
 void* runRandomTest( void* params )
 {
 	assert( params != nullptr );
 	ThreadStartupParamsAndResults* testParams = reinterpret_cast<ThreadStartupParamsAndResults*>( params );
-	MyAllocatorT allocator( testParams->threadRes );
-	printf( "    running thread %zd with %s [rnd_seed = %llu] ...\n", testParams->threadID, allocator.name(), rnd_seed );
+	Allocator allocator( testParams->threadRes );
 	switch ( testParams->startupParams.mat )
 	{
 		case MEM_ACCESS_TYPE::none:
-			randomPos_RandomSize<MyAllocatorT,MEM_ACCESS_TYPE::none>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::none>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
 			break;
 		case MEM_ACCESS_TYPE::full:
-			randomPos_RandomSize<MyAllocatorT,MEM_ACCESS_TYPE::full>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::full>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
 			break;
 		case MEM_ACCESS_TYPE::single:
-			randomPos_RandomSize<MyAllocatorT,MEM_ACCESS_TYPE::single>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::single>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
 			break;
 	}
 
 	return nullptr;
 }
 
+template<class Allocator>
 void runTest( TestStartupParamsAndResults* startupParams )
 {
 	size_t threadCount = startupParams->startupParams.threadCount;
@@ -80,7 +80,7 @@ void runTest( TestStartupParamsAndResults* startupParams )
 	for ( size_t i=0; i<threadCount; ++i )
 	{
 		printf( "about to run thread %zd...\n", i );
-		std::thread t1( runRandomTest, (void*)(testParams + i) );
+		std::thread t1( runRandomTest<Allocator>, (void*)(testParams + i) );
 		threads[i] = std::move( t1 );
 		printf( "    ...done\n" );
 	}
@@ -112,10 +112,12 @@ void runTest( TestStartupParamsAndResults* startupParams )
 
 int main()
 { 
-	TestRes testRes[max_threads];
+	TestRes testResMyAlloc[max_threads];
+	TestRes testResVoidAlloc[max_threads];
+	memset( testResMyAlloc, 0, sizeof( testResMyAlloc ) );
+	memset( testResVoidAlloc, 0, sizeof( testResVoidAlloc ) );
 
-	memset( testRes, 0, sizeof( testRes ) );
-
+	size_t maxItems = 1 << 25;
 	TestStartupParamsAndResults params;
 	params.startupParams.iterCount = 100000000;
 	params.startupParams.maxItemSize = 16;
@@ -126,31 +128,45 @@ int main()
 
 	for ( params.startupParams.threadCount=1; params.startupParams.threadCount<=threadCountMax; ++(params.startupParams.threadCount) )
 	{
-		params.startupParams.maxItems = (1 << 25) / params.startupParams.threadCount;
-		params.testRes = testRes + params.startupParams.threadCount;
-		runTest( &params );
+		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
+		params.testRes = testResMyAlloc + params.startupParams.threadCount;
+		runTest<MyAllocatorT>( &params );
+
+		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
+		params.testRes = testResVoidAlloc + params.startupParams.threadCount;
+		runTest<VoidAllocatorForTest>( &params );
 	}
 
 	printf( "Test summary:\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
 	{
-		TestRes& tr = testRes[threadCount];
-		printf( "%zd,%zd\n", threadCount, tr.duration );
+		TestRes& trVoid = testResVoidAlloc[threadCount];
+		TestRes& trMy = testResMyAlloc[threadCount];
+		printf( "%zd,%zd,%zd,%zd\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration );
 		printf( "Per-thread stats:\n" );
 		for ( size_t i=0;i<threadCount;++i )
 		{
 			printf( "   %zd:\n", i );
-			printThreadStats( "\t", tr.threadRes[i] );
+			printThreadStats( "\t", trMy.threadRes[i] );
 		}
 	}
 	printf( "\n" );
-	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE:\n" );
+	const char* memAccessTypeStr = params.startupParams.mat == MEM_ACCESS_TYPE::none ? "none" : ( params.startupParams.mat == MEM_ACCESS_TYPE::single ? "single" : ( params.startupParams.mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
+	printf( "Short test summary for \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s:\n", MyAllocatorT::name(), params.startupParams.maxItemSize, maxItems, params.startupParams.iterCount, memAccessTypeStr );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-			printf( "%zd,%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].duration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz, testRes[threadCount].allocatedMax );
+	{
+		TestRes& trVoid = testResVoidAlloc[threadCount];
+		TestRes& trMy = testResMyAlloc[threadCount];
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 
+	}
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
 	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
-			printf( "%zd,%zd,%zd,%zd,%zd\n", threadCount, testRes[threadCount].cumulativeDuration, testRes[threadCount].rssMax, testRes[threadCount].allocatedAfterSetupSz, testRes[threadCount].allocatedMax );
+	{
+		TestRes& trVoid = testResVoidAlloc[threadCount];
+		TestRes& trMy = testResMyAlloc[threadCount];
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
+	}
 
 	return 0;
 }
