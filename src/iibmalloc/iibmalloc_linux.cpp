@@ -25,26 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- selector
+ * iibmalloc allocator
  * 
- * v.1.00    Jun-22-2018    Initial release
+ * v.1.00    May-09-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
+ 
+ 
+//#include "bucket_allocator.h"
+#include "iibmalloc.h"
+
+#include <cstdlib>
+#include <cstddef>
+#include <memory>
+#include <cstring>
+#include <limits>
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 
-#ifndef SELECTOR_H
-#define SELECTOR_H
-
-// TODO:
-// (1) #include "my_allocator.h"
-// (2) define MyAllocatorT properly
-// (3) make sure other inclusions and/or definitions are removed or commented out :)
-
-//#include "new_delete_allocator.h"
-//typedef NewDeleteAllocatorForTest MyAllocatorT;
-
-#include "iib_allocator.h"
-typedef IibmallocAllocatorForTest MyAllocatorT;
+thread_local SerializableAllocatorBase g_AllocManager;
 
 
-#endif // SELECTOR_H
+// void* operator new(std::size_t count)
+// {
+// 	return g_AllocManager.allocate(count);
+// }
+// 
+// void* operator new[](std::size_t count)
+// {
+// 	return g_AllocManager.allocate(count);
+// }
+// 
+// void operator delete(void* ptr) noexcept
+// {
+// 	g_AllocManager.deallocate(ptr);
+// }
+// 
+// void operator delete[](void* ptr) noexcept
+// {
+// 	g_AllocManager.deallocate(ptr);
+// }
+
+#if __cplusplus >= 201703L
+
+//We don't support alignment new/delete yet
+
+//void* operator new(std::size_t count, std::align_val_t alignment);
+//void* operator new[](std::size_t count, std::align_val_t alignment);
+//void operator delete(void* ptr, std::align_val_t al) noexcept;
+//void operator delete[](void* ptr, std::align_val_t al) noexcept;
+#endif
+
+

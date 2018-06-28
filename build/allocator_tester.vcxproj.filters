@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="linux_staff_for_quick_editing">
+      <UniqueIdentifier>{86d52201-e305-4294-a503-8fb1d22d7d96}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\allocator_tester.cpp">
@@ -20,6 +23,18 @@
     </ClCompile>
     <ClCompile Include="..\src\test_common.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\iibmalloc_windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\page_allocator_windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\page_allocator_linux.cpp">
+      <Filter>linux_staff_for_quick_editing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\iibmalloc_linux.cpp">
+      <Filter>linux_staff_for_quick_editing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -36,6 +51,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\void_allocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\iib_allocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\iibmalloc\iibmalloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\iibmalloc\iibmalloc_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\iibmalloc\page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

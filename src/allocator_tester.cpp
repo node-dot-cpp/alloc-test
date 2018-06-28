@@ -124,7 +124,7 @@ int main()
 //		params.startupParams.maxItems = 23 << 20;
 	params.startupParams.mat = MEM_ACCESS_TYPE::full;
 
-	size_t threadMin = 18;
+	size_t threadMin = 17;
 	size_t threadMax = 19;
 
 	for ( params.startupParams.threadCount=threadMin; params.startupParams.threadCount<=threadMax; ++(params.startupParams.threadCount) )
@@ -133,9 +133,9 @@ int main()
 		params.testRes = testResMyAlloc + params.startupParams.threadCount;
 		runTest<MyAllocatorT>( &params );
 
-		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
+/*		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
 		params.testRes = testResVoidAlloc + params.startupParams.threadCount;
-		runTest<VoidAllocatorForTest>( &params );
+		runTest<VoidAllocatorForTest<MyAllocatorT>>( &params );*/
 	}
 
 	printf( "Test summary:\n" );

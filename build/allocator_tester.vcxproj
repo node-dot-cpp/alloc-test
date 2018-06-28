@@ -20,11 +20,29 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\allocator_tester.cpp" />
+    <ClCompile Include="..\src\iibmalloc\iibmalloc_linux.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\iibmalloc_windows.cpp" />
+    <ClCompile Include="..\src\iibmalloc\page_allocator_linux.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\iibmalloc\page_allocator_windows.cpp" />
     <ClCompile Include="..\src\test_common.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\allocator_tester.h" />
+    <ClInclude Include="..\src\iibmalloc\iibmalloc.h" />
+    <ClInclude Include="..\src\iibmalloc\iibmalloc_common.h" />
+    <ClInclude Include="..\src\iibmalloc\page_allocator.h" />
     <ClInclude Include="..\src\new_delete_allocator.h" />
+    <ClInclude Include="..\src\iib_allocator.h" />
     <ClInclude Include="..\src\selector.h" />
     <ClInclude Include="..\src\test_common.h" />
     <ClInclude Include="..\src\void_allocator.h" />
