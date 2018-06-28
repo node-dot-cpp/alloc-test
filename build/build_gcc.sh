@@ -1,1 +1,0 @@
-g++ ../src/test_common.cpp ../src/allocator_tester.cpp -std=c++17 -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-empty-body -DNDEBUG -O2 -flto -lpthread -o tester.bin
