@@ -124,9 +124,10 @@ int main()
 //		params.startupParams.maxItems = 23 << 20;
 	params.startupParams.mat = MEM_ACCESS_TYPE::full;
 
-	size_t threadCountMax = 23;
+	size_t threadMin = 18;
+	size_t threadMax = 19;
 
-	for ( params.startupParams.threadCount=1; params.startupParams.threadCount<=threadCountMax; ++(params.startupParams.threadCount) )
+	for ( params.startupParams.threadCount=threadMin; params.startupParams.threadCount<=threadMax; ++(params.startupParams.threadCount) )
 	{
 		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
 		params.testRes = testResMyAlloc + params.startupParams.threadCount;
@@ -138,7 +139,7 @@ int main()
 	}
 
 	printf( "Test summary:\n" );
-	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
+	for ( size_t threadCount=threadMin; threadCount<=threadMax; ++threadCount )
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
@@ -153,7 +154,7 @@ int main()
 	printf( "\n" );
 	const char* memAccessTypeStr = params.startupParams.mat == MEM_ACCESS_TYPE::none ? "none" : ( params.startupParams.mat == MEM_ACCESS_TYPE::single ? "single" : ( params.startupParams.mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
 	printf( "Short test summary for \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s:\n", MyAllocatorT::name(), params.startupParams.maxItemSize, maxItems, params.startupParams.iterCount, memAccessTypeStr );
-	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
+	for ( size_t threadCount=threadMin; threadCount<=threadMax; ++threadCount )
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
@@ -161,7 +162,7 @@ int main()
 
 	}
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
-	for ( size_t threadCount=1; threadCount<=threadCountMax; ++threadCount )
+	for ( size_t threadCount=threadMin; threadCount<=threadMax; ++threadCount )
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
