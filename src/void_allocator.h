@@ -55,12 +55,12 @@ public:
 	void init()
 	{
 		alloc.init();
-//		fakeBuffer = new uint8_t [fakeBufferSize];
 		fakeBuffer = reinterpret_cast<uint8_t*>( alloc.allocate( fakeBufferSize ) );
 	}
+	void* allocateSlots( size_t sz ) { static_assert( isFake()); assert( sz <= fakeBufferSize ); return alloc.allocate( sz ); }
 	void* allocate( size_t sz ) { assert( sz <= fakeBufferSize ); return fakeBuffer; }
 	void deallocate( void* ptr ) {}
-//	void deinit() { if ( fakeBuffer ) delete [] fakeBuffer; fakeBuffer = nullptr; }
+	void deallocateSlots( void* ptr ) {alloc.deallocate( ptr );}
 	void deinit() { if ( fakeBuffer ) alloc.deallocate( fakeBuffer ); fakeBuffer = nullptr; }
 
 	// next calls are to get additional stats of the allocator, etc, if desired

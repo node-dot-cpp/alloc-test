@@ -212,10 +212,10 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	};
 
 	TestBin* baseBuff = nullptr; 
-	if ( !allocatorUnderTest.isFake() )
+	if constexpr ( !allocatorUnderTest.isFake() )
 		baseBuff = reinterpret_cast<TestBin*>( allocatorUnderTest.allocate( maxItems * sizeof(TestBin) ) );
 	else
-		baseBuff = new TestBin [ maxItems ]; // just using standard allocator
+		baseBuff = reinterpret_cast<TestBin*>( allocatorUnderTest.allocateSlots( maxItems * sizeof(TestBin) ) );
 	assert( baseBuff );
 	allocatedSz +=  maxItems * sizeof(TestBin);
 	memset( baseBuff, 0, maxItems * sizeof( TestBin ) );
@@ -339,10 +339,10 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 			allocatorUnderTest.deallocate( baseBuff[idx].ptr );
 		}
 
-	if ( !allocatorUnderTest.isFake() )
+	if constexpr ( !allocatorUnderTest.isFake() )
 		allocatorUnderTest.deallocate( baseBuff );
 	else
-		delete [] baseBuff;
+		allocatorUnderTest.deallocateSlots( baseBuff );
 	allocatorUnderTest.deinit();
 	allocatorUnderTest.getTestRes()->rdtscExit = __rdtsc();
 	allocatorUnderTest.getTestRes()->innerDur = GetMillisecondCount() - start;

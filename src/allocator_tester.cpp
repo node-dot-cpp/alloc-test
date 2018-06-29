@@ -159,7 +159,7 @@ int main()
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
-		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trVoid.rssMax, trVoid.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 
 	}
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
@@ -167,7 +167,7 @@ int main()
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
-		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trVoid.rssMax, trVoid.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 	}
 
 	return 0;
