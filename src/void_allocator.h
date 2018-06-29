@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- void allocator
+ * Memory allocator tester -- void allocator (used for estimating cost of test itself)
  * 
  * v.1.00    Jun-22-2018    Initial release
  * 
@@ -37,26 +37,31 @@
 
 #include "test_common.h"
 
-
+template<class ActualAllocator>
 class VoidAllocatorForTest
 {
 	ThreadTestRes* testRes;
+	ThreadTestRes discardedTestRes;
+	ActualAllocator alloc;
 	uint8_t* fakeBuffer = nullptr;
 	static constexpr size_t fakeBufferSize = 0x1000000;
 
 public:
-	VoidAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; }
+	VoidAllocatorForTest( ThreadTestRes* testRes_ ) : alloc( &discardedTestRes ) { testRes = testRes_; }
 	static constexpr bool isFake() { return true; } // thus indicating that certain checks over allocated memory should be ommited
 
 	static constexpr const char* name() { return "void allocator"; }
 
 	void init()
 	{
-		fakeBuffer = new uint8_t [fakeBufferSize];
+		alloc.init();
+//		fakeBuffer = new uint8_t [fakeBufferSize];
+		fakeBuffer = reinterpret_cast<uint8_t*>( alloc.allocate( fakeBufferSize ) );
 	}
 	void* allocate( size_t sz ) { assert( sz <= fakeBufferSize ); return fakeBuffer; }
 	void deallocate( void* ptr ) {}
-	void deinit() { if ( fakeBuffer ) delete [] fakeBuffer; fakeBuffer = nullptr; }
+//	void deinit() { if ( fakeBuffer ) delete [] fakeBuffer; fakeBuffer = nullptr; }
+	void deinit() { if ( fakeBuffer ) alloc.deallocate( fakeBuffer ); fakeBuffer = nullptr; }
 
 	// next calls are to get additional stats of the allocator, etc, if desired
 	void doWhateverAfterSetupPhase() {}
