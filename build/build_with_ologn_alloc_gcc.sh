@@ -1,1 +1,0 @@
-g++-7 ../src/test_common.cpp ../src/allocator_tester.cpp ../src/ologn_alloc/page_allocator_linux.cpp ../src/ologn_alloc/bucket_allocator_linux.cpp -std=c++17 -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-empty-body -DNDEBUG -O2 -flto -lpthread -o tester.bin

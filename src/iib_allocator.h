@@ -32,8 +32,8 @@
  * -------------------------------------------------------------------------------*/
 
 
-#ifndef OLOGN_ALLOCATOR_H
-#define OLOGN_ALLOCATOR_H
+#ifndef IIBMALLOC_ALLOCATOR_H
+#define IIBMALLOC_ALLOCATOR_H
 
 #include "test_common.h"
 #include "iibmalloc/iibmalloc.h"
@@ -47,7 +47,7 @@ public:
 	IibmallocAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; }
 	static constexpr bool isFake() { return false; }
 
-	static constexpr const char* name() { return "ologn allocator"; }
+	static constexpr const char* name() { return "iibmalloc allocator"; }
 
 	void init()
 	{
@@ -73,4 +73,4 @@ public:
 
 
 
-#endif // OLOGN_ALLOCATOR_H
+#endif // IIBMALLOC_ALLOCATOR_H
