@@ -64,6 +64,92 @@ static_assert( 1 + PAGE_SIZE_MASK == PAGE_SIZE, "" );
 //#define USE_ITEM_HEADER
 #define USE_SOUNDING_PAGE_ADDRESS
 
+template<class BasePageAllocator, class ItemT>
+class CollectionInPages : public BasePageAllocator
+{
+	struct ListItem
+	{
+		ItemT item;
+		ListItem* next;
+	};
+	ListItem* head;
+	ListItem* freeList;
+	size_t pageCnt;
+	void collectPageStarts( ListItem* pageStartHead, ListItem* fromList )
+	{
+		ListItem* curr = fromList;
+		while (curr)
+		{
+			if ( ((uintptr_t)curr & PAGE_SIZE_MASK) == 0 )
+			{
+				ListItem* tmp = curr->next;
+				curr->next = pageStartHead;
+				pageStartHead = curr;
+				curr = tmp;
+			}
+			else
+				curr = curr->next;
+		}
+	}
+public:
+	void initialize( uint8_t blockSizeExp )
+	{
+		BasePageAllocator::initialize( blockSizeExp );
+		head = nullptr;
+		freeList = nullptr;
+		pageCnt = 0;
+	}
+	ItemT* createNew()
+	{
+		if ( freeList == nullptr )
+		{
+			freeList = reinterpret_cast<ListItem*>( this->getFreeBlockNoCache( PAGE_SIZE ) );
+			++pageCnt;
+			ListItem* item = freeList;
+			size_t itemCnt = PAGE_SIZE / sizeof( ListItem );
+			assert( itemCnt != 0 );
+			for ( size_t i=0; i<itemCnt-1; ++i )
+			{
+				item->next = item + 1;
+				item = item->next;
+			}
+			item->next = nullptr;
+		}
+		assert( freeList != nullptr );
+		ListItem* tmp = head;
+		ListItem* nextFree = freeList->next;
+		head = freeList;
+		head->next = tmp;
+		freeList = nextFree;
+//		freeList->next = head;
+//		head->next = freeList;
+		return &(head->item);
+	}
+	template<class Functor>
+	void doForEach(Functor& f)
+	{
+		ListItem* curr = head;
+		while (curr)
+			f.f( curr->item );
+	}
+	void clear()
+	{
+		ListItem* pageStartHead = nullptr;
+		collectPageStarts( pageStartHead, head );
+		collectPageStarts( pageStartHead, freeList );
+		while (pageStartHead)
+		{
+			ListItem* tmp = pageStartHead->next;
+			this->freeChunkNoCache( pageStartHead, PAGE_SIZE );
+			--pageCnt;
+			pageStartHead = tmp;
+		}
+		assert( pageCnt == 0 );
+		head = nullptr;
+		freeList = nullptr;
+	}
+};
+
 #ifdef USE_SOUNDING_PAGE_ADDRESS
 template<class BasePageAllocator, size_t bucket_cnt_exp, size_t reservation_size_exp, size_t commit_page_cnt_exp, size_t multipage_page_cnt_exp>
 class SoundingAddressPageAllocator : public BasePageAllocator
@@ -95,6 +181,7 @@ class SoundingAddressPageAllocator : public BasePageAllocator
 		uint16_t nextToCommit[ bucket_cnt ];
 		static_assert( UINT16_MAX > pages_per_bucket , "revise implementation" );
 	};
+	CollectionInPages<BasePageAllocator,PageBlockDescriptor> pageBlockDescriptors;
 	PageBlockDescriptor pageBlockListStart;
 	PageBlockDescriptor* pageBlockListCurrent;
 	PageBlockDescriptor* indexHead[bucket_cnt];
@@ -108,7 +195,8 @@ class SoundingAddressPageAllocator : public BasePageAllocator
 	void* createNextBlockAndGetPage( size_t reasonIdx )
 	{
 		assert( reasonIdx < bucket_cnt );
-		PageBlockDescriptor* pb = new PageBlockDescriptor; // TODO: consider using our own allocator
+//		PageBlockDescriptor* pb = new PageBlockDescriptor; // TODO: consider using our own allocator
+		PageBlockDescriptor* pb = pageBlockDescriptors.createNew();
 		pb->blockAddress = getNextBlock();
 //printf( "createNextBlockAndGetPage(): descriptor allocated at 0x%zx; block = 0x%zx\n", (size_t)(pb), (size_t)(pb->blockAddress) );
 		memset( pb->nextToUse, 0, sizeof( uint16_t) * bucket_cnt );
@@ -187,6 +275,7 @@ public:
 	void initialize( uint8_t blockSizeExp )
 	{
 		BasePageAllocator::initialize( blockSizeExp );
+		pageBlockDescriptors.initialize(PAGE_SIZE_EXP);
 		resetLists();
 	}
 
@@ -322,8 +411,11 @@ public:
 
 	void deinitialize()
 	{
+		class F { private: BasePageAllocator* alloc; public: F(BasePageAllocator*alloc_) {alloc = alloc_;} void f(PageBlockDescriptor& h) {assert( h.blockAddress != nullptr ); alloc->freeChunkNoCache( h.blockAddress, reservation_size ); } }; F f(this);
+		pageBlockDescriptors.doForEach(f);
+		pageBlockDescriptors.deinitialize();
 //printf( "Entering deinitialize()...\n" );
-		PageBlockDescriptor* next = pageBlockListStart.next;
+/*		PageBlockDescriptor* next = pageBlockListStart.next;
 		while( next )
 		{
 //printf( "in block 0x%zx about to delete 0x%zx of size 0x%zx\n", (size_t)( next ), (size_t)( next->blockAddress ), PAGE_SIZE * bucket_cnt );
@@ -332,7 +424,7 @@ public:
 			PageBlockDescriptor* tmp = next->next;
 			delete next;
 			next = tmp;
-		}
+		}*/
 		resetLists();
 		BasePageAllocator::deinitialize();
 	}
@@ -378,7 +470,8 @@ public:
 	static constexpr size_t reservedSizeAtPageStart() { return sizeof( AnyChunkHeader ); }
 
 private:
-	std::vector<AnyChunkHeader*> blockList;
+//	std::vector<AnyChunkHeader*> blockList;
+	CollectionInPages<BasePageAllocator,AnyChunkHeader*> blocks;
 
 	struct FreeChunkHeader : public AnyChunkHeader
 	{
@@ -449,11 +542,13 @@ private:
 
 	void dbgValidateAllBlocks()
 	{
-		for ( size_t i=0; i<blockList.size(); ++i )
+		class F { private: BulkAllocator<BasePageAllocator, commited_block_size, max_pages>* me; public: F(BulkAllocator<BasePageAllocator, commited_block_size, max_pages>*me_) {me = me_;} void f(AnyChunkHeader* h) {assert( blockList[i] != nullptr ); me->dbgValidateBlock( start ); } }; F f(this);
+		blocks.doForEachBlock( f );
+/*		for ( size_t i=0; i<blockList.size(); ++i )
 		{
 			AnyChunkHeader* start = reinterpret_cast<AnyChunkHeader*>( blockList[i] );
 			dbgValidateBlock( start );
-		}
+		}*/
 	}
 
 	void dbgValidateFreeList( const FreeChunkHeader* h, const uint16_t pageCnt )
@@ -495,7 +590,8 @@ public:
 		BasePageAllocator::initialize( blockSizeExp );
 		for ( size_t i=0; i<=max_pages; ++i )
 			freeListBegin[i] = nullptr;
-		new ( &blockList ) std::vector<AnyChunkHeader*>;
+//		new ( &blockList ) std::vector<AnyChunkHeader*>;
+		blocks.initialize( PAGE_SIZE_EXP );
 #ifdef BULKALLOCATOR_HEAVY_DEBUG
 		dbgValidateAllBlocks();
 		dbgValidateAllFreeLists();
@@ -524,7 +620,8 @@ public:
 				{
 					FreeChunkHeader* h = reinterpret_cast<FreeChunkHeader*>( this->getFreeBlockNoCache( commited_block_size ) );
 					assert( h!= nullptr );
-					blockList.push_back( h );
+//					blockList.push_back( h );
+					*(blocks.createNew()) = h;
 					freeListBegin[ max_pages ] = h;
 					freeListBegin[ max_pages ]->set( nullptr, nullptr, pagesPerAllocatedBlock, true );
 					freeListBegin[ max_pages ]->nextFree = nullptr;
@@ -646,12 +743,15 @@ public:
 
 	void deinitialize()
 	{
-		for ( size_t i=0; i<blockList.size(); ++i )
+		class F { private: BasePageAllocator* alloc; public: F(BasePageAllocator*alloc_) {alloc = alloc_;} void f(AnyChunkHeader* h) {assert( h != nullptr ); alloc->freeChunkNoCache( h, commited_block_size ); } }; F f(this);
+		blocks.doForEach(f);
+		blocks.deinitialize();
+/*		for ( size_t i=0; i<blockList.size(); ++i )
 		{
 			assert( blockList[i] != nullptr );
 			this->freeChunkNoCache( blockList[i], commited_block_size );
 		}
-		blockList.clear();
+		blockList.clear();*/
 		for ( size_t i=0; i<=max_pages; ++i )
 			freeListBegin[i] = nullptr;
 #ifdef BULKALLOCATOR_HEAVY_DEBUG
