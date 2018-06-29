@@ -100,6 +100,7 @@ struct TestRes
 	size_t cumulativeDuration;
 	size_t rssMax;
 	size_t allocatedAfterSetupSz;
+	size_t rssAfterExitingAllThreads;
 #ifdef COLLECT_USER_MAX_ALLOCATED
 	size_t allocatedMax;
 #endif

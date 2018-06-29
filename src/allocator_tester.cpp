@@ -108,6 +108,7 @@ void runTest( TestStartupParamsAndResults* startupParams )
 			startupParams->testRes->rssMax = startupParams->testRes->threadRes[i].rssMax;
 	}
 	startupParams->testRes->cumulativeDuration /= threadCount;
+	startupParams->testRes->rssAfterExitingAllThreads = getRss();
 }
 
 int main()
@@ -133,9 +134,9 @@ int main()
 		params.testRes = testResMyAlloc + params.startupParams.threadCount;
 		runTest<MyAllocatorT>( &params );
 
-/*		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
+		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
 		params.testRes = testResVoidAlloc + params.startupParams.threadCount;
-		runTest<VoidAllocatorForTest<MyAllocatorT>>( &params );*/
+		runTest<VoidAllocatorForTest<MyAllocatorT>>( &params );
 	}
 
 	printf( "Test summary:\n" );
@@ -158,7 +159,7 @@ int main()
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
-		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 
 	}
 	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
@@ -166,7 +167,7 @@ int main()
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
-		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
+		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 	}
 
 	return 0;
