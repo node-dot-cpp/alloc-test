@@ -666,7 +666,7 @@ class SerializableAllocatorBase
 {
 protected:
 	static constexpr size_t MaxBucketSize = PAGE_SIZE * 2;
-	static constexpr size_t BucketCountExp = 5;
+	static constexpr size_t BucketCountExp = 6;
 	static constexpr size_t BucketCount = 1 << BucketCountExp;
 	void* buckets[BucketCount];
 
@@ -720,6 +720,14 @@ public:
 		size_t ret = ( 1ULL << ((ix>>1) + 3) ) + ( ( ( ( ix + 1 ) & 1 ) - 1 ) & ( 1ULL << ((ix>>1) + 2) ) );
 		return alignUpExp( ret, 3 ); // this is because of case ix = 1, ret = 12 (keeping 8-byte alignment)
 	}
+	static constexpr
+	FORCE_INLINE size_t indexToBucketSizeQuarterExp(uint8_t ix) // Note: currently is used once per page formatting
+	{
+		ix += 3;
+		size_t ret = ( 4ULL << ((ix>>2)) ) + ((ix&3)+1) * (1ULL << ((ix>>2)));
+//		size_t ret = ( 4ULL << ((ix>>2)) ) + ( ( ( ( ix+1) & 1 ) - 1 ) & (1ULL << ((ix>>2))) ) + ( ( ( ((ix>>1)+1) & 1 ) - 1 ) & (2ULL << ((ix>>2))) ) + (1ULL << ((ix>>2)));
+		return alignUpExp( ret, 3 ); // this is because of case ix = 1, ret = 12 (keeping 8-byte alignment), etc
+	}
 
 #if defined(_MSC_VER)
 #if defined(_M_IX86)
@@ -749,6 +757,19 @@ public:
 //		printf( "ix = %zd\n", ix );
 		uint8_t addition = 1 & ( sz >> (ix-1) );
 		ix = ((ix-2)<<1) + addition - 1;
+		return static_cast<uint8_t>(ix);
+	}
+	static
+	FORCE_INLINE uint8_t sizeToIndexQuarterExp(uint64_t sz)
+	{
+		if ( sz <= 8 )
+			return 0;
+		sz -= 1;
+		unsigned long ix;
+		uint8_t r = _BitScanReverse64(&ix, sz);
+//		printf( "ix = %zd\n", ix );
+		uint8_t addition = 3 & ( sz >> (ix-2) );
+		ix = ((ix-2)<<2) + addition - 3;
 		return static_cast<uint8_t>(ix);
 	}
 #else
@@ -783,6 +804,21 @@ public:
 //		printf( "ix = %zd\n", ix );
 		uint8_t addition = 1ull & ( sz >> (ix-1) );
 		ix = ((ix-2)<<1) + addition - 1;
+		return static_cast<uint8_t>(ix);
+	}
+	static
+		FORCE_INLINE uint8_t sizeToIndexQuarterExp(uint64_t sz)
+	{
+		if ( sz <= 8 )
+			return 0;
+		sz -= 1;
+//		uint64_t ix = __builtin_clzll(sz - 1);
+//		return (sz <= 8) ? 0 : static_cast<uint8_t>(61ull - ix);
+		uint64_t ix = __builtin_clzll(sz);
+		ix = 63ull - ix;
+//		printf( "ix = %zd\n", ix );
+		uint8_t addition = 3ull & ( sz >> (ix-2) );
+		ix = ((ix-2)<<2) + addition - 3;
 		return static_cast<uint8_t>(ix);
 	}
 #else
@@ -855,8 +891,9 @@ public:
 
 	NOINLINE void* allocateInCaseNoFreeBucket( size_t sz, uint8_t szidx )
 	{
-//		size_t bucketSz = indexToBucketSize( szidx ); // TODO: rework
-		size_t bucketSz = indexToBucketSizeHalfExp( szidx ); // TODO: rework
+//		size_t bucketSz = indexToBucketSize( szidx );
+//		size_t bucketSz = indexToBucketSizeHalfExp( szidx );
+		size_t bucketSz = indexToBucketSizeQuarterExp( szidx );
 		assert( bucketSz >= sizeof( void* ) );
 #ifdef USE_SOUNDING_PAGE_ADDRESS
 #else
@@ -931,7 +968,8 @@ public:
 		if ( sz <= MaxBucketSize )
 		{
 //			uint8_t szidx = sizeToIndex( sz );
-			uint8_t szidx = sizeToIndexHalfExp( sz );
+//			uint8_t szidx = sizeToIndexHalfExp( sz );
+			uint8_t szidx = sizeToIndexQuarterExp( sz );
 			assert( szidx < BucketCount );
 			if ( buckets[szidx] )
 			{
