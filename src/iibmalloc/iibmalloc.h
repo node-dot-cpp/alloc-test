@@ -544,7 +544,7 @@ private:
 
 	void dbgValidateAllBlocks()
 	{
-		class F { private: BulkAllocator<BasePageAllocator, commited_block_size, max_pages>* me; public: F(BulkAllocator<BasePageAllocator, commited_block_size, max_pages>*me_) {me = me_;} void f(AnyChunkHeader* h) {assert( blockList[i] != nullptr ); me->dbgValidateBlock( start ); } }; F f(this);
+		class F { private: BulkAllocator<BasePageAllocator, commited_block_size, max_pages>* me; public: F(BulkAllocator<BasePageAllocator, commited_block_size, max_pages>*me_) {me = me_;} void f(AnyChunkHeader* h) {assert( blockList[i] != nullptr ); me->dbgValidateBlock( h ); } }; F f(this);
 		blocks.doForEachBlock( f );
 /*		for ( size_t i=0; i<blockList.size(); ++i )
 		{
