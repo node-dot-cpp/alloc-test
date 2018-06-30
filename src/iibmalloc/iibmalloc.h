@@ -75,7 +75,7 @@ class CollectionInPages : public BasePageAllocator
 	ListItem* head;
 	ListItem* freeList;
 	size_t pageCnt;
-	void collectPageStarts( ListItem* pageStartHead, ListItem* fromList )
+	void collectPageStarts( ListItem** pageStartHead, ListItem* fromList )
 	{
 		ListItem* curr = fromList;
 		while (curr)
@@ -83,8 +83,8 @@ class CollectionInPages : public BasePageAllocator
 			if ( ((uintptr_t)curr & PAGE_SIZE_MASK) == 0 )
 			{
 				ListItem* tmp = curr->next;
-				curr->next = pageStartHead;
-				pageStartHead = curr;
+				curr->next = *pageStartHead;
+				*pageStartHead = curr;
 				curr = tmp;
 			}
 			else
@@ -130,13 +130,16 @@ public:
 	{
 		ListItem* curr = head;
 		while (curr)
+		{
 			f.f( curr->item );
+			curr = curr->next;
+		}
 	}
-	void clear()
+	void deinitialize()
 	{
 		ListItem* pageStartHead = nullptr;
-		collectPageStarts( pageStartHead, head );
-		collectPageStarts( pageStartHead, freeList );
+		collectPageStarts( &pageStartHead, head );
+		collectPageStarts( &pageStartHead, freeList );
 		while (pageStartHead)
 		{
 			ListItem* tmp = pageStartHead->next;
@@ -411,20 +414,19 @@ public:
 
 	void deinitialize()
 	{
-		class F { private: BasePageAllocator* alloc; public: F(BasePageAllocator*alloc_) {alloc = alloc_;} void f(PageBlockDescriptor& h) {assert( h.blockAddress != nullptr ); alloc->freeChunkNoCache( h.blockAddress, reservation_size ); } }; F f(this);
-		pageBlockDescriptors.doForEach(f);
-		pageBlockDescriptors.deinitialize();
-//printf( "Entering deinitialize()...\n" );
-/*		PageBlockDescriptor* next = pageBlockListStart.next;
+		PageBlockDescriptor* next = pageBlockListStart.next;
 		while( next )
 		{
 //printf( "in block 0x%zx about to delete 0x%zx of size 0x%zx\n", (size_t)( next ), (size_t)( next->blockAddress ), PAGE_SIZE * bucket_cnt );
 			assert( next->blockAddress );
 			this->freeChunkNoCache( reinterpret_cast<MemoryBlockListItem*>( next->blockAddress ), reservation_size );
 			PageBlockDescriptor* tmp = next->next;
-			delete next;
+//			delete next;
 			next = tmp;
-		}*/
+		}
+//		class F { private: BasePageAllocator* alloc; public: F(BasePageAllocator*alloc_) {alloc = alloc_;} void f(PageBlockDescriptor& h) {assert( h.blockAddress != nullptr ); alloc->freeChunkNoCache( h.blockAddress, reservation_size ); } }; F f(this);
+//		pageBlockDescriptors.doForEach(f);
+		pageBlockDescriptors.deinitialize();
 		resetLists();
 		BasePageAllocator::deinitialize();
 	}
