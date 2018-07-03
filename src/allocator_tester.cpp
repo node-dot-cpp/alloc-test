@@ -125,8 +125,8 @@ int main()
 //		params.startupParams.maxItems = 23 << 20;
 	params.startupParams.mat = MEM_ACCESS_TYPE::full;
 
-	size_t threadMin = 17;
-	size_t threadMax = 19;
+	size_t threadMin = 1;
+	size_t threadMax = 23;
 
 	for ( params.startupParams.threadCount=threadMin; params.startupParams.threadCount<=threadMax; ++(params.startupParams.threadCount) )
 	{
