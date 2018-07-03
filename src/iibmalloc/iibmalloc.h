@@ -40,7 +40,7 @@
 #include <limits>
 #include <vector> // potentially, a temporary solution
 
-#include "iibmalloc.h"
+#include "iibmalloc_common.h"
 #include "page_allocator.h"
 
 
@@ -763,6 +763,9 @@ public:
 	}
 };
 
+//#define USE_EXP_BUCKET_SIZES
+#define USE_HALF_EXP_BUCKET_SIZES
+//#define USE_QUAD_EXP_BUCKET_SIZES
 
 class SerializableAllocatorBase
 {
@@ -811,17 +814,20 @@ protected:
 
 protected:
 public:
+#ifdef USE_EXP_BUCKET_SIZES
 	static constexpr
 	FORCE_INLINE size_t indexToBucketSize(uint8_t ix) // Note: currently is used once per page formatting
 	{
 		return 1ULL << (ix + 3);
 	}
+#elif defined USE_HALF_EXP_BUCKET_SIZES
 	static constexpr
 	FORCE_INLINE size_t indexToBucketSizeHalfExp(uint8_t ix) // Note: currently is used once per page formatting
 	{
 		size_t ret = ( 1ULL << ((ix>>1) + 3) ) + ( ( ( ( ix + 1 ) & 1 ) - 1 ) & ( 1ULL << ((ix>>1) + 2) ) );
 		return alignUpExp( ret, 3 ); // this is because of case ix = 1, ret = 12 (keeping 8-byte alignment)
 	}
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
 	static constexpr
 	FORCE_INLINE size_t indexToBucketSizeQuarterExp(uint8_t ix) // Note: currently is used once per page formatting
 	{
@@ -830,9 +836,13 @@ public:
 //		size_t ret = ( 4ULL << ((ix>>2)) ) + ( ( ( ( ix+1) & 1 ) - 1 ) & (1ULL << ((ix>>2))) ) + ( ( ( ((ix>>1)+1) & 1 ) - 1 ) & (2ULL << ((ix>>2))) ) + (1ULL << ((ix>>2)));
 		return alignUpExp( ret, 3 ); // this is because of case ix = 1, ret = 12 (keeping 8-byte alignment), etc
 	}
+#else
+#error "Undefined bucket size schema"
+#endif
 
 #if defined(_MSC_VER)
 #if defined(_M_IX86)
+#ifdef USE_EXP_BUCKET_SIZES
 	static
 		FORCE_INLINE uint8_t sizeToIndex(uint32_t sz)
 	{
@@ -840,7 +850,15 @@ public:
 		uint8_t r = _BitScanReverse(&ix, sz - 1);
 		return (sz <= 8) ? 0 : static_cast<uint8_t>(ix - 2);
 	}
+#elif defined USE_HALF_EXP_BUCKET_SIZES
+#error "not implemented"
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
+#error "not implemented"
+#else
+#error "Undefined bucket size schema
+#endif
 #elif defined(_M_X64)
+#ifdef USE_EXP_BUCKET_SIZES
 	static
 	FORCE_INLINE uint8_t sizeToIndex(uint64_t sz)
 	{
@@ -848,6 +866,7 @@ public:
 		uint8_t r = _BitScanReverse64(&ix, sz - 1);
 		return (sz <= 8) ? 0 : static_cast<uint8_t>(ix - 2);
 	}
+#elif defined USE_HALF_EXP_BUCKET_SIZES
 	static
 	FORCE_INLINE uint8_t sizeToIndexHalfExp(uint64_t sz)
 	{
@@ -861,6 +880,7 @@ public:
 		ix = ((ix-2)<<1) + addition - 1;
 		return static_cast<uint8_t>(ix);
 	}
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
 	static
 	FORCE_INLINE uint8_t sizeToIndexQuarterExp(uint64_t sz)
 	{
@@ -875,24 +895,37 @@ public:
 		return static_cast<uint8_t>(ix);
 	}
 #else
+#error "Undefined bucket size schema
+#endif
+#else
 #error Unknown 32/64 bits architecture
 #endif
 
 #elif defined(__GNUC__)
 #if defined(__i386__)
+#ifdef USE_EXP_BUCKET_SIZES
 	static
 		FORCE_INLINE uint8_t sizeToIndex(uint32_t sz)
 	{
 		uint32_t ix = __builtin_clzl(sz - 1);
 		return (sz <= 8) ? 0 : static_cast<uint8_t>(29ul - ix);
 	}
+#elif defined USE_HALF_EXP_BUCKET_SIZES
+#error "not implemented"
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
+#error "not implemented"
+#else
+#error "Undefined bucket size schema
+#endif
 #elif defined(__x86_64__)
+#ifdef USE_EXP_BUCKET_SIZES
 	static
 		FORCE_INLINE uint8_t sizeToIndex(uint64_t sz)
 	{
 		uint64_t ix = __builtin_clzll(sz - 1);
 		return (sz <= 8) ? 0 : static_cast<uint8_t>(61ull - ix);
 	}
+#elif defined USE_HALF_EXP_BUCKET_SIZES
 	static
 		FORCE_INLINE uint8_t sizeToIndexHalfExp(uint64_t sz)
 	{
@@ -908,6 +941,7 @@ public:
 		ix = ((ix-2)<<1) + addition - 1;
 		return static_cast<uint8_t>(ix);
 	}
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
 	static
 		FORCE_INLINE uint8_t sizeToIndexQuarterExp(uint64_t sz)
 	{
@@ -923,6 +957,9 @@ public:
 		ix = ((ix-2)<<2) + addition - 3;
 		return static_cast<uint8_t>(ix);
 	}
+#else
+#error "Undefined bucket size schema
+#endif
 #else
 #error Unknown 32/64 bits architecture
 #endif	
@@ -993,9 +1030,15 @@ public:
 
 	NOINLINE void* allocateInCaseNoFreeBucket( size_t sz, uint8_t szidx )
 	{
-//		size_t bucketSz = indexToBucketSize( szidx );
-//		size_t bucketSz = indexToBucketSizeHalfExp( szidx );
+#ifdef USE_EXP_BUCKET_SIZES
+		size_t bucketSz = indexToBucketSize( szidx );
+#elif defined USE_HALF_EXP_BUCKET_SIZES
+		size_t bucketSz = indexToBucketSizeHalfExp( szidx );
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
 		size_t bucketSz = indexToBucketSizeQuarterExp( szidx );
+#else
+#error "Undefined bucket size schema
+#endif
 		assert( bucketSz >= sizeof( void* ) );
 #ifdef USE_SOUNDING_PAGE_ADDRESS
 #else
@@ -1069,9 +1112,15 @@ public:
 	{
 		if ( sz <= MaxBucketSize )
 		{
-//			uint8_t szidx = sizeToIndex( sz );
-//			uint8_t szidx = sizeToIndexHalfExp( sz );
+#ifdef USE_EXP_BUCKET_SIZES
+			uint8_t szidx = sizeToIndex( sz );
+#elif defined USE_HALF_EXP_BUCKET_SIZES
+			uint8_t szidx = sizeToIndexHalfExp( sz );
+#elif defined USE_QUAD_EXP_BUCKET_SIZES
 			uint8_t szidx = sizeToIndexQuarterExp( sz );
+#else
+#error "Undefined bucket size schema
+#endif
 			assert( szidx < BucketCount );
 			if ( buckets[szidx] )
 			{
