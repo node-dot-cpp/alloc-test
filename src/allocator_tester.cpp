@@ -34,9 +34,6 @@
 #include "selector.h"
 #include "allocator_tester.h"
 
-thread_local unsigned long long rnd_seed = 0;
-
-
 template<class Allocator>
 void* runRandomTest( void* params )
 {
@@ -46,13 +43,13 @@ void* runRandomTest( void* params )
 	switch ( testParams->startupParams.mat )
 	{
 		case MEM_ACCESS_TYPE::none:
-			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::none>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::none>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID, testParams->startupParams.rndSeed );
 			break;
 		case MEM_ACCESS_TYPE::full:
-			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::full>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::full>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID, testParams->startupParams.rndSeed );
 			break;
 		case MEM_ACCESS_TYPE::single:
-			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::single>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID );
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::single>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID, testParams->startupParams.rndSeed );
 			break;
 	}
 

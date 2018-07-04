@@ -54,31 +54,50 @@
 #include "void_allocator.h" // used as an estimation of the cost of test itself
 
 
-extern thread_local unsigned long long rnd_seed;
-
-FORCE_INLINE unsigned long long rng64(void)
+class PRNG
 {
-	unsigned long long c = 7319936632422683443ULL;
-	unsigned long long x = (rnd_seed += c);
-	
-	x ^= x >> 32;
-	x *= c;
-	x ^= x >> 32;
-	x *= c;
-	x ^= x >> 32;
-	
-	/* Return lower 32bits */
-	return x;
-}
+	uint64_t seedVal;
+public:
+	PRNG() { seedVal = 0; }
+	PRNG( size_t seed_ ) { seedVal = seed_; }
+	void seed( size_t seed_ ) { seedVal = seed_; }
 
-FORCE_INLINE uint32_t xorshift32( uint32_t x )
-{
-	/* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-	return x;
-}
+	/*FORCE_INLINE uint32_t rng32( uint32_t x )
+	{
+		// Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs"
+		x ^= x << 13;
+		x ^= x >> 17;
+		x ^= x << 5;
+		return x;
+	}*/
+/*	FORCE_INLINE uint32_t rng32()
+	{
+		unsigned long long x = (seedVal += 7319936632422683443ULL);	
+		x ^= x >> 32;
+		x *= c;
+		x ^= x >> 32;
+		x *= c;
+		x ^= x >> 32;
+        return uint32_t(x);
+	}*/
+	FORCE_INLINE uint32_t rng32()
+	{
+		// based on implementation of xorshift by Arvid Gerstmann
+		// see, for instance, https://arvid.io/2018/07/02/better-cxx-prng/
+        uint64_t ret = seedVal * 0xd989bcacc137dcd5ull;
+        seedVal ^= seedVal >> 11;
+        seedVal ^= seedVal << 31;
+        seedVal ^= seedVal >> 18;
+        return uint32_t(ret >> 32ull);
+	}
+
+	FORCE_INLINE uint64_t rng64()
+	{
+        uint64_t ret = rng32();
+		ret <<= 32;
+		return ret + rng32();
+	}
+};
 
 FORCE_INLINE size_t calcSizeWithStatsAdjustment( uint64_t randNum, size_t maxSizeExp )
 {
@@ -110,9 +129,11 @@ inline void testDistribution()
 	memset( bins, 0, sizeof( bins) );
 	size_t total = 0;
 
+	PRNG rng;
+
 	for (size_t i=0;i<testCnt;++i)
 	{
-		size_t val = calcSizeWithStatsAdjustment( rng64(), exp );
+		size_t val = calcSizeWithStatsAdjustment( rng.rng64(), exp );
 //		assert( val <= (((size_t)1)<<exp) );
 		assert( val );
 		if ( val <=8 )
@@ -183,7 +204,7 @@ size_t Pareto_80_20_6_Rand( const Pareto_80_20_6_Data& data, uint32_t rnum1, uin
 }
 
 template< class AllocatorUnderTest, MEM_ACCESS_TYPE mat>
-void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID )
+void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID, size_t rnd_seed )
 {
 	static constexpr const char* memAccessTypeStr = mat == MEM_ACCESS_TYPE::none ? "none" : ( mat == MEM_ACCESS_TYPE::single ? "single" : ( mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
 	printf( "    running thread %zd with \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s,  [rnd_seed = %llu] ...\n", threadID, allocatorUnderTest.name(), maxItemSizeExp, maxItems, iterCount, memAccessTypeStr, rnd_seed );
@@ -220,14 +241,16 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	allocatedSz +=  maxItems * sizeof(TestBin);
 	memset( baseBuff, 0, maxItems * sizeof( TestBin ) );
 
+	PRNG rng;
+
 	// setup (saturation)
 	for ( size_t i=0;i<maxItems/32; ++i )
 	{
-		uint32_t randNum = (uint32_t)( rng64() );
+		uint32_t randNum = rng.rng32();
 		for ( size_t j=0; j<32; ++j )
 			if ( (randNum >> j) & 1 )
 			{
-				size_t randNumSz = rng64();
+				size_t randNumSz = rng.rng64();
 				size_t sz = calcSizeWithStatsAdjustment( randNumSz, maxItemSizeExp );
 				baseBuff[i*32+j].sz = sz;
 				baseBuff[i*32+j].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
@@ -256,10 +279,8 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	{
 		for ( size_t j=0;j<iterCount>>5; ++j )
 		{
-			size_t randNum = rng64();
-	//		size_t idx = randNum % maxItems;
-			uint32_t rnum1 = (uint32_t)randNum;
-			uint32_t rnum2 = (uint32_t)(randNum >> 32);
+			uint32_t rnum1 = rng.rng32();
+			uint32_t rnum2 = rng.rng32();
 			size_t idx = Pareto_80_20_6_Rand( paretoData, rnum1, rnum2 );
 			if ( baseBuff[idx].ptr )
 			{
@@ -288,7 +309,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 			}
 			else
 			{
-				size_t sz = calcSizeWithStatsAdjustment( rng64(), maxItemSizeExp );
+				size_t sz = calcSizeWithStatsAdjustment( rng.rng64(), maxItemSizeExp );
 				baseBuff[idx].sz = sz;
 				baseBuff[idx].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
 				if constexpr ( doMemAccess )

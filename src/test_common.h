@@ -114,6 +114,7 @@ struct TestStartupParams
 	size_t maxItemSize;
 	size_t iterCount;
 	MEM_ACCESS_TYPE mat;
+	size_t  rndSeed;
 };
 
 struct TestStartupParamsAndResults
