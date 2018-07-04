@@ -1,4 +1,13 @@
-To test an allocator:
+To test tcmalloc / jemalloc / hoard / ptmalloc:
+
+1. Make sure new_delete_allocator is selected at selector.h
+
+2. See useful build notes at section "Testing" at http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/
+
+3. Edit build_gcc.sh to enable one of the above allocators (add/edit to have one of -ljemalloc, -ltcmalloc, -lhoard, -L libmalloc.a) 
+
+
+To test any other allocator:
 
 1. Create "src/my_allocator.h" file with a class representing an allocator to be tested.
    As a sample "src/new_delete_allocator.h" or "src/void_allocator.h" could be taken.

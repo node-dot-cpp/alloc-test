@@ -40,11 +40,11 @@
 // (2) define MyAllocatorT properly
 // (3) make sure other inclusions and/or definitions are removed or commented out :)
 
-//#include "new_delete_allocator.h"
-//typedef NewDeleteAllocatorForTest MyAllocatorT;
+#include "new_delete_allocator.h"
+typedef NewDeleteAllocatorForTest MyAllocatorT;
 
-#include "iib_allocator.h"
-typedef IibmallocAllocatorForTest MyAllocatorT;
+//#include "iib_allocator.h"
+//typedef IibmallocAllocatorForTest MyAllocatorT;
 
 
 #endif // SELECTOR_H
