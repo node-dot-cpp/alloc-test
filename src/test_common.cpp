@@ -121,6 +121,7 @@ size_t getRss()
 	FILE* fstats = fopen( "/proc/self/statm", "rb" );
 	constexpr size_t buffsz = 0x1000;
 	char buff[buffsz];
+	buff[0] = 0;
 	buff[buffsz-1] = 0;
 	fread( buff, 1, buffsz-1, fstats);
 	fclose( fstats);

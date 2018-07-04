@@ -254,7 +254,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	}
 
 	static constexpr const char* memAccessTypeStr = mat == MEM_ACCESS_TYPE::none ? "none" : ( mat == MEM_ACCESS_TYPE::single ? "single" : ( mat == MEM_ACCESS_TYPE::full ? "full" : ( mat == MEM_ACCESS_TYPE::check ? "check" : "unknown" ) ) );
-	printf( "    running thread %zd with \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s,  [rnd_seed = %llu] ...\n", threadID, allocatorUnderTest.name(), maxItemSizeExp, maxItems, iterCount, memAccessTypeStr, rnd_seed );
+	printf( "    running thread %zd with \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s,  [rnd_seed = %sz] ...\n", threadID, allocatorUnderTest.name(), maxItemSizeExp, maxItems, iterCount, memAccessTypeStr, rnd_seed );
 	constexpr bool doMemAccess = mat != MEM_ACCESS_TYPE::none;
 	allocatorUnderTest.init();
 	allocatorUnderTest.getTestRes()->threadID = threadID; // just as received
