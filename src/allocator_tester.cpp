@@ -164,6 +164,8 @@ int main()
 	printf( "\n" );
 	const char* memAccessTypeStr = params.startupParams.mat == MEM_ACCESS_TYPE::none ? "none" : ( params.startupParams.mat == MEM_ACCESS_TYPE::single ? "single" : ( params.startupParams.mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
 	printf( "Short test summary for \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s:\n", MyAllocatorT::name(), params.startupParams.maxItemSize, maxItems, params.startupParams.iterCount, memAccessTypeStr );
+	printf( "columns:\n" );
+	printf( "thread,duration(ms),duration of void(ms),diff(ms),RSS max(pages),rssAfterExitingAllThreads(pages),RSS max for void(pages),rssAfterExitingAllThreads for void(pages),allocatedAfterSetup(app level,bytes),allocatedMax(app level,bytes),(RSS max<<12)/allocatedMax\n" );
 	for ( size_t threadCount=threadMin; threadCount<=threadMax; ++threadCount )
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
@@ -171,13 +173,13 @@ int main()
 		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.duration, trVoid.duration, trMy.duration - trVoid.duration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trVoid.rssMax, trVoid.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
 
 	}
-	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
+/*	printf( "Short test summary for USE_RANDOMPOS_RANDOMSIZE (alt computations):\n" );
 	for ( size_t threadCount=threadMin; threadCount<=threadMax; ++threadCount )
 	{
 		TestRes& trVoid = testResVoidAlloc[threadCount];
 		TestRes& trMy = testResMyAlloc[threadCount];
 		printf( "%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%zd,%f\n", threadCount, trMy.cumulativeDuration, trVoid.cumulativeDuration, trMy.cumulativeDuration - trVoid.cumulativeDuration, trMy.rssMax, trMy.rssAfterExitingAllThreads, trVoid.rssMax, trVoid.rssAfterExitingAllThreads, trMy.allocatedAfterSetupSz, trMy.allocatedMax, (trMy.rssMax << 12) * 1. / trMy.allocatedMax );
-	}
+	}*/
 
 	return 0;
 }

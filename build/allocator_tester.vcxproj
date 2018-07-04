@@ -47,6 +47,9 @@
     <ClInclude Include="..\src\test_common.h" />
     <ClInclude Include="..\src\void_allocator.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\README.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{FC405E8D-0D68-4B6E-8603-DC20847B0D45}</ProjectGuid>
