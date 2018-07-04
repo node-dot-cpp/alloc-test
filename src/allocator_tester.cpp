@@ -51,6 +51,9 @@ void* runRandomTest( void* params )
 		case MEM_ACCESS_TYPE::single:
 			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::single>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID, testParams->startupParams.rndSeed );
 			break;
+		case MEM_ACCESS_TYPE::check:
+			randomPos_RandomSize<Allocator,MEM_ACCESS_TYPE::check>( allocator, testParams->startupParams.iterCount, testParams->startupParams.maxItems, testParams->startupParams.maxItemSize, testParams->threadID, testParams->startupParams.rndSeed );
+			break;
 	}
 
 	return nullptr;
@@ -120,20 +123,29 @@ int main()
 	params.startupParams.iterCount = 100000000;
 	params.startupParams.maxItemSize = 16;
 //		params.startupParams.maxItems = 23 << 20;
-	params.startupParams.mat = MEM_ACCESS_TYPE::full;
+	params.startupParams.mat = MEM_ACCESS_TYPE::check;
 
 	size_t threadMin = 1;
-	size_t threadMax = 23;
+	size_t threadMax = 1;
 
 	for ( params.startupParams.threadCount=threadMin; params.startupParams.threadCount<=threadMax; ++(params.startupParams.threadCount) )
 	{
 		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
 		params.testRes = testResMyAlloc + params.startupParams.threadCount;
-		runTest<MyAllocatorT>( &params );
+		runPerformanceTest<MyAllocatorT>( &params );
 
-		params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
-		params.testRes = testResVoidAlloc + params.startupParams.threadCount;
-		runTest<VoidAllocatorForTest<MyAllocatorT>>( &params );
+		if ( params.startupParams.mat != MEM_ACCESS_TYPE::check )
+		{
+			params.startupParams.maxItems = maxItems / params.startupParams.threadCount;
+			params.testRes = testResVoidAlloc + params.startupParams.threadCount;
+			runPerformanceTest<VoidAllocatorForTest<MyAllocatorT>>( &params );
+		}
+	}
+
+	if ( params.startupParams.mat == MEM_ACCESS_TYPE::check )
+	{
+		printf( "Correctness test has been passed successfully\n" );
+		return 0;
 	}
 
 	printf( "Test summary:\n" );

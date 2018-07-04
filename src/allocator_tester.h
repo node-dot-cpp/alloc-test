@@ -268,7 +268,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	size_t allocatedSz = 0;
 	size_t allocatedSzMax = 0;
 
-	size_t reincarnation = 0;
+	uint32_t reincarnation = 0;
 
 	Pareto_80_20_6_Data paretoData;
 	assert( maxItems <= UINT32_MAX );
@@ -357,7 +357,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						else
 						{
 							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
-							fillSegmentWithRandomData( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
+							checkSegment( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
 						}
 					}
 				}
@@ -424,7 +424,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						else
 						{
 							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
-							fillSegmentWithRandomData( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
+							checkSegment( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
 						}
 				}
 			}
