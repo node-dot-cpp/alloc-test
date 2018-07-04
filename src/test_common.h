@@ -65,7 +65,7 @@ size_t getRss();
 
 constexpr size_t max_threads = 32;
 
-enum MEM_ACCESS_TYPE { none, single, full };
+enum MEM_ACCESS_TYPE { none, single, full, check };
 
 #define COLLECT_USER_MAX_ALLOCATED
 

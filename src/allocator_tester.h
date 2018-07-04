@@ -203,13 +203,59 @@ size_t Pareto_80_20_6_Rand( const Pareto_80_20_6_Data& data, uint32_t rnum1, uin
 	return data.offsets[ idx ] + offsetInRange;
 }
 
+void fillSegmentWithRandomData( uint8_t* ptr, size_t sz, size_t reincarnation )
+{
+	PRNG rng( ((uintptr_t)ptr) ^ ((uintptr_t)sz << 32) ^ reincarnation );
+	for ( size_t i=0; i<(sz>>2); ++i )
+		(reinterpret_cast<uint32_t*>(ptr))[i] = rng.rng32();
+	ptr += (sz>>2)<<2;
+	if ( sz & 3 )
+	{
+		uint32_t last = rng.rng32();
+		for ( size_t i=0; i<(sz&3); ++i )
+		{
+			(ptr)[i] = (uint8_t)last;
+			last >>= 8;
+		}
+	}
+}
+void checkSegment( uint8_t* ptr, size_t sz, size_t reincarnation )
+{
+	PRNG rng( ((uintptr_t)ptr) ^ ((uintptr_t)sz << 32) ^ reincarnation );
+	for ( size_t i=0; i<(sz>>2); ++i )
+		if ( (reinterpret_cast<uint32_t*>(ptr))[i] != rng.rng32() )
+		{
+			printf( "memcheck failed for ptr=%zd, size=%zd, reincarnation=%zd, from %zd\n", (size_t)(ptr), sz, reincarnation, i*4 );
+			throw std::bad_alloc();
+		}
+	ptr += (sz>>2)<<2;
+	if ( sz & 3 )
+	{
+		uint32_t last = rng.rng32();
+		for ( size_t i=0; i<(sz&3); ++i )
+		{
+			if( (ptr)[i] != (uint8_t)last )
+			{
+			printf( "memcheck failed for ptr=%zd, size=%zd, reincarnation=%zd, from %zd\n", (size_t)(ptr), sz, reincarnation, ((sz>>2)<<2) + i );
+				throw std::bad_alloc();
+			}
+			last >>= 8;
+		}
+	}
+}
+
 template< class AllocatorUnderTest, MEM_ACCESS_TYPE mat>
 void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID, size_t rnd_seed )
 {
-	static constexpr const char* memAccessTypeStr = mat == MEM_ACCESS_TYPE::none ? "none" : ( mat == MEM_ACCESS_TYPE::single ? "single" : ( mat == MEM_ACCESS_TYPE::full ? "full" : "unknown" ) );
+	if( maxItemSizeExp >= 32 )
+	{
+		printf( "allocation sizes greater than 2^31 are not yet supported; revise implementation, if desired\n" );
+		throw std::bad_exception();
+	}
+
+	static constexpr const char* memAccessTypeStr = mat == MEM_ACCESS_TYPE::none ? "none" : ( mat == MEM_ACCESS_TYPE::single ? "single" : ( mat == MEM_ACCESS_TYPE::full ? "full" : ( mat == MEM_ACCESS_TYPE::check ? "check" : "unknown" ) ) );
 	printf( "    running thread %zd with \'%s\' and maxItemSizeExp = %zd, maxItems = %zd, iterCount = %zd, allocated memory access mode: %s,  [rnd_seed = %llu] ...\n", threadID, allocatorUnderTest.name(), maxItemSizeExp, maxItems, iterCount, memAccessTypeStr, rnd_seed );
 	constexpr bool doMemAccess = mat != MEM_ACCESS_TYPE::none;
-//	printf( "rnd_seed = %zd, iterCount = %zd, maxItems = %zd, maxItemSizeExp = %zd\n", rnd_seed, iterCount, maxItems, maxItemSizeExp );
 	allocatorUnderTest.init();
 	allocatorUnderTest.getTestRes()->threadID = threadID; // just as received
 	allocatorUnderTest.getTestRes()->rdtscBegin = __rdtsc();
@@ -222,6 +268,8 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	size_t allocatedSz = 0;
 	size_t allocatedSzMax = 0;
 
+	size_t reincarnation = 0;
+
 	Pareto_80_20_6_Data paretoData;
 	assert( maxItems <= UINT32_MAX );
 	Pareto_80_20_6_Init( paretoData, (uint32_t)maxItems );
@@ -229,7 +277,8 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	struct TestBin
 	{
 		uint8_t* ptr;
-		size_t sz;
+		uint32_t sz;
+		uint32_t reincarnation;
 	};
 
 	TestBin* baseBuff = nullptr; 
@@ -252,16 +301,22 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 			{
 				size_t randNumSz = rng.rng64();
 				size_t sz = calcSizeWithStatsAdjustment( randNumSz, maxItemSizeExp );
-				baseBuff[i*32+j].sz = sz;
+				baseBuff[i*32+j].sz = (uint32_t)sz;
 				baseBuff[i*32+j].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
 				if constexpr ( doMemAccess )
 				{
 					if constexpr ( mat == MEM_ACCESS_TYPE::full )
 						memset( baseBuff[i*32+j].ptr, (uint8_t)sz, sz );
 					else
-					{
-						static_assert( mat == MEM_ACCESS_TYPE::single, "" );
-						baseBuff[i*32+j].ptr[sz/2] = (uint8_t)sz;
+					{ 
+						if constexpr ( mat == MEM_ACCESS_TYPE::single )
+							baseBuff[i*32+j].ptr[sz/2] = (uint8_t)sz;
+						else
+						{
+							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
+							baseBuff[i*32+j].reincarnation = reincarnation;
+							fillSegmentWithRandomData( baseBuff[i*32+j].ptr, sz, reincarnation++ );
+						}
 					}
 				}
 				allocatedSz += sz;
@@ -297,8 +352,13 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 					}
 					else
 					{
-						static_assert( mat == MEM_ACCESS_TYPE::single, "" );
-						dummyCtr += baseBuff[idx].ptr[baseBuff[idx].sz/2];
+						if constexpr ( mat == MEM_ACCESS_TYPE::single )
+							dummyCtr += baseBuff[idx].ptr[baseBuff[idx].sz/2];
+						else
+						{
+							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
+							fillSegmentWithRandomData( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
+						}
 					}
 				}
 #ifdef COLLECT_USER_MAX_ALLOCATED
@@ -310,7 +370,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 			else
 			{
 				size_t sz = calcSizeWithStatsAdjustment( rng.rng64(), maxItemSizeExp );
-				baseBuff[idx].sz = sz;
+				baseBuff[idx].sz = (uint32_t)sz;
 				baseBuff[idx].ptr = reinterpret_cast<uint8_t*>( allocatorUnderTest.allocate( sz ) );
 				if constexpr ( doMemAccess )
 				{
@@ -318,8 +378,14 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 						memset( baseBuff[idx].ptr, (uint8_t)sz, sz );
 					else
 					{
-						static_assert( mat == MEM_ACCESS_TYPE::single, "" );
-						baseBuff[idx].ptr[sz/2] = (uint8_t)sz;
+						if constexpr ( mat == MEM_ACCESS_TYPE::single )
+							baseBuff[idx].ptr[sz/2] = (uint8_t)sz;
+						else
+						{
+							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
+							baseBuff[idx].reincarnation = reincarnation;
+							fillSegmentWithRandomData( baseBuff[idx].ptr, sz, reincarnation++ );
+						}
 					}
 				}
 #ifdef COLLECT_USER_MAX_ALLOCATED
@@ -353,8 +419,13 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 				}
 				else
 				{
-					static_assert( mat == MEM_ACCESS_TYPE::single, "" );
-					dummyCtr += baseBuff[idx].ptr[baseBuff[idx].sz/2];
+						if constexpr ( mat == MEM_ACCESS_TYPE::single )
+							dummyCtr += baseBuff[idx].ptr[baseBuff[idx].sz/2];
+						else
+						{
+							static_assert( mat == MEM_ACCESS_TYPE::check, "" );
+							fillSegmentWithRandomData( baseBuff[idx].ptr, baseBuff[idx].sz, baseBuff[idx].reincarnation );
+						}
 				}
 			}
 			allocatorUnderTest.deallocate( baseBuff[idx].ptr );
