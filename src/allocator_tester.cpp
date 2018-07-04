@@ -123,10 +123,10 @@ int main()
 	params.startupParams.iterCount = 100000000;
 	params.startupParams.maxItemSize = 16;
 //		params.startupParams.maxItems = 23 << 20;
-	params.startupParams.mat = MEM_ACCESS_TYPE::check;
+	params.startupParams.mat = MEM_ACCESS_TYPE::full;
 
 	size_t threadMin = 1;
-	size_t threadMax = 1;
+	size_t threadMax = 23;
 
 	for ( params.startupParams.threadCount=threadMin; params.startupParams.threadCount<=threadMax; ++(params.startupParams.threadCount) )
 	{
