@@ -25,22 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- common
+ * Per-thread bucket allocator
  * 
- * v.1.00    Jun-22-2018    Initial release
+ * v.1.00    May-09-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
+ 
+#ifndef BUCKET_ALLOCATOR_COMMON_H
+#define BUCKET_ALLOCATOR_COMMON_H
 
-#ifndef ALLOCATOR_TEST_COMMON_H
-#define ALLOCATOR_TEST_COMMON_H
-
+#include <cstddef>
+#include <cinttypes>
 #include <memory>
-#include <cstdint>
-#include <stdlib.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
+#include <cassert>
+#include <array>
+
+
+// FUNCTION INLINING, etc
 
 #if _MSC_VER
 #include <intrin.h>
@@ -48,7 +50,6 @@
 #define NOINLINE      __declspec(noinline)
 #define FORCE_INLINE	__forceinline
 #elif __GNUC__
-#include <x86intrin.h>
 #define ALIGN(n)      __attribute__ ((aligned(n))) 
 #define NOINLINE      __attribute__ ((noinline))
 #define	FORCE_INLINE inline __attribute__((always_inline))
@@ -59,76 +60,74 @@
 #warning ALIGN, FORCE_INLINE and NOINLINE may not be properly defined
 #endif
 
-int64_t GetMicrosecondCount();
-size_t GetMillisecondCount();
-size_t getRss();
 
-constexpr size_t max_threads = 32;
+// HELPER FUNCTIONS
 
-enum MEM_ACCESS_TYPE { none, single, full, check };
-
-#define COLLECT_USER_MAX_ALLOCATED
-
-struct ThreadTestRes
+template<size_t IX>
+constexpr
+uint8_t sizeToExpImpl(size_t sz)
 {
-	size_t threadID;
-
-	size_t innerDur;
-
-	uint64_t rdtscBegin;
-	uint64_t rdtscSetup;
-	uint64_t rdtscMainLoop;
-	uint64_t rdtscExit;
-
-	size_t rssMax;
-	size_t allocatedAfterSetupSz;
-#ifdef COLLECT_USER_MAX_ALLOCATED
-	size_t allocatedMax;
-#endif
-};
-
-inline
-void printThreadStats( const char* prefix, ThreadTestRes& res )
-{
-	uint64_t rdtscTotal = res.rdtscExit - res.rdtscBegin;
-	printf( "%s%zd: %zdms; %zd (%.2f | %.2f | %.2f);\n", prefix, res.threadID, res.innerDur, rdtscTotal, (res.rdtscSetup - res.rdtscBegin) * 100. / rdtscTotal, (res.rdtscMainLoop - res.rdtscSetup) * 100. / rdtscTotal, (res.rdtscExit - res.rdtscMainLoop) * 100. / rdtscTotal );
+    return (sz == ((1ull) << (IX))) ? IX : sizeToExpImpl<IX - 1>(sz);
 }
 
-struct TestRes
+template<>
+constexpr
+uint8_t sizeToExpImpl<0>(size_t sz)
 {
-	size_t duration;
-	size_t cumulativeDuration;
-	size_t rssMax;
-	size_t allocatedAfterSetupSz;
-	size_t rssAfterExitingAllThreads;
-#ifdef COLLECT_USER_MAX_ALLOCATED
-	size_t allocatedMax;
-#endif
-	ThreadTestRes threadRes[max_threads];
-};
+	return 0; // error?
+}
 
-struct TestStartupParams
+FORCE_INLINE constexpr
+uint8_t sizeToExp(size_t sz)
 {
-	size_t threadCount;
-	size_t maxItems;
-	size_t maxItemSize;
-	size_t iterCount;
-	MEM_ACCESS_TYPE mat;
-	size_t  rndSeed;
-};
+	// keep it reasonable!
+	return sizeToExpImpl<32>(sz);
+}
 
-struct TestStartupParamsAndResults
+FORCE_INLINE constexpr
+size_t expToSize(uint8_t exp)
 {
-	TestStartupParams startupParams;
-	TestRes* testRes;
-};
+	return static_cast<size_t>(1) << exp;
+}
 
-struct ThreadStartupParamsAndResults
+static_assert(sizeToExp(64 * 1024) == 16, "broken!");
+
+FORCE_INLINE constexpr
+size_t expToMask(size_t sz)
 {
-	TestStartupParams startupParams;
-	size_t threadID;
-	ThreadTestRes* threadRes;
-};
+	// keep it reasonable!
+	return (static_cast<size_t>(1) << sz) - 1;
+}
 
 
-#endif // ALLOCATOR_TEST_COMMON_H
+FORCE_INLINE constexpr
+bool isAlignedMask(uintptr_t sz, uintptr_t alignmentMask)
+{
+	return (sz & alignmentMask) == 0;
+}
+
+FORCE_INLINE constexpr
+uintptr_t alignDownExp(uintptr_t sz, uintptr_t alignmentExp)
+{
+	return ( sz >> alignmentExp ) << alignmentExp;
+}
+
+inline constexpr
+bool isAlignedExp(uintptr_t sz, uintptr_t alignment)
+{
+	return alignDownExp(sz, alignment) == sz;
+}
+
+FORCE_INLINE constexpr
+uintptr_t alignUpMask(uintptr_t sz, uintptr_t alignmentMask)
+{
+	return (( sz & alignmentMask) == 0) ? sz : sz - (sz & alignmentMask) + alignmentMask + 1;
+}
+inline constexpr
+uintptr_t alignUpExp(uintptr_t sz, uintptr_t alignmentExp)
+{
+	return ( ((uintptr_t)(-((intptr_t)((((uintptr_t)(-((intptr_t)sz))))) >> alignmentExp ))) << alignmentExp);
+}
+
+
+#endif // BUCKET_ALLOCATOR_COMMON_H

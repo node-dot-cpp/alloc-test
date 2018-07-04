@@ -25,26 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- selector
+ * Memory allocator tester -- ologn allocator
  * 
- * v.1.00    Jun-22-2018    Initial release
+ * v.1.00    Jun-27-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
 
-#ifndef SELECTOR_H
-#define SELECTOR_H
+#ifndef IIBMALLOC_ALLOCATOR_H
+#define IIBMALLOC_ALLOCATOR_H
 
-// TODO:
-// (1) #include "my_allocator.h"
-// (2) define MyAllocatorT properly
-// (3) make sure other inclusions and/or definitions are removed or commented out :)
-
-#include "new_delete_allocator.h"
-typedef NewDeleteAllocatorForTest MyAllocatorT;
-
-//#include "iib_allocator.h"
-//typedef IibmallocAllocatorForTest MyAllocatorT;
+#include "test_common.h"
+#include "iibmalloc/iibmalloc.h"
 
 
-#endif // SELECTOR_H
+class IibmallocAllocatorForTest
+{
+	ThreadTestRes* testRes;
+
+public:
+	IibmallocAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; }
+	static constexpr bool isFake() { return false; }
+
+	static constexpr const char* name() { return "iibmalloc allocator"; }
+
+	void init()
+	{
+		g_AllocManager.initialize();
+		g_AllocManager.enable();
+	}
+	void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
+	void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+	void deinit()
+	{
+		g_AllocManager.deinitialize();
+		g_AllocManager.disable();
+	}
+
+	// next calls are to get additional stats of the allocator, etc, if desired
+	void doWhateverAfterSetupPhase() {}
+	void doWhateverAfterMainLoopPhase() {}
+	void doWhateverAfterCleanupPhase() {}
+
+	ThreadTestRes* getTestRes() { return testRes; }
+};
+
+
+
+
+#endif // IIBMALLOC_ALLOCATOR_H
