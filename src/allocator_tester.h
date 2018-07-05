@@ -60,7 +60,7 @@ class PRNG
 public:
 	PRNG() { seedVal = 1; }
 	PRNG( size_t seed_ ) { seedVal = seed_ ? seed_ : 1; }
-	void seed( size_t seed_ ) { seedVal = seed_; }
+	void seed( size_t seed_ ) { seedVal = seed_ ? seed_ : 1; }
 
 	/*FORCE_INLINE uint32_t rng32( uint32_t x )
 	{
@@ -84,11 +84,11 @@ public:
 	{
 		// based on implementation of xorshift by Arvid Gerstmann
 		// see, for instance, https://arvid.io/2018/07/02/better-cxx-prng/
-        uint64_t ret = seedVal * 0xd989bcacc137dcd5ull;
-        seedVal ^= seedVal >> 11;
-        seedVal ^= seedVal << 31;
-        seedVal ^= seedVal >> 18;
-        return uint32_t(ret >> 32ull);
+		uint64_t ret = seedVal * 0xd989bcacc137dcd5ull;
+		seedVal ^= seedVal >> 11;
+		seedVal ^= seedVal << 31;
+		seedVal ^= seedVal >> 18;
+		return uint32_t(ret >> 32ull);
 	}
 
 	FORCE_INLINE uint64_t rng64()
