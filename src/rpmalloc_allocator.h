@@ -25,35 +25,61 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- selector
+ * Memory allocator tester -- rpmalloc allocator
  * 
  * v.1.00    Jun-22-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
 
-#ifndef SELECTOR_H
-#define SELECTOR_H
+#ifndef RPMALLOC_ALLOCATOR_H
+#define RPMALLOC_ALLOCATOR_H
 
-// TODO:
-// (1) #include "my_allocator.h"
-// (2) define MyAllocatorT properly
-// (3) make sure other inclusions and/or definitions are removed or commented out :)
+#include "test_common.h"
 
-#ifdef USE_RPMALLOC
+#include <rpmalloc.h>
 
-#include "rpmalloc_allocator.h"
-typedef RPMallocAllocatorForTest MyAllocatorT;
+#include <atomic>
 
-#else
+class RPMallocGuard {
+public:
+	RPMallocGuard() {
+		bool notInitialized = false;
+		if (isInitialized.compare_exchange_strong(notInitialized, true))
+			rpmalloc_initialize();
+	}
 
-#include "new_delete_allocator.h"
-typedef NewDeleteAllocatorForTest MyAllocatorT;
+	void ref() {}
 
-#endif
+	static std::atomic_bool isInitialized;
+};
 
-//#include "iib_allocator.h"
-//typedef IibmallocAllocatorForTest MyAllocatorT;
+class RPMallocAllocatorForTest
+{
+	ThreadTestRes* testRes;
+
+public:
+	RPMallocAllocatorForTest( ThreadTestRes* testRes_ ) { testRes = testRes_; rpmalloc_guard.ref(); }
+	static constexpr bool isFake() { return false; }
+
+	static constexpr const char* name() { return "rpmalloc allocator"; }
+
+	void init() { rpmalloc_thread_initialize(); }
+	void* allocate( size_t sz ) { return rpmalloc(sz); }
+	void deallocate( void* ptr ) { rpfree(ptr); }
+	void deinit() { rpmalloc_thread_finalize(); }
+
+	// next calls are to get additional stats of the allocator, etc, if desired
+	void doWhateverAfterSetupPhase() {}
+	void doWhateverAfterMainLoopPhase() {}
+	void doWhateverAfterCleanupPhase() {}
+
+	ThreadTestRes* getTestRes() { return testRes; }
+
+	RPMallocGuard rpmalloc_guard;
+};
 
 
-#endif // SELECTOR_H
+
+
+#endif // RPMALLOC_ALLOCATOR_H
