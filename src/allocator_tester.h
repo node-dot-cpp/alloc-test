@@ -58,8 +58,8 @@ class PRNG
 {
 	uint64_t seedVal;
 public:
-	PRNG() { seedVal = 0; }
-	PRNG( size_t seed_ ) { seedVal = seed_; }
+	PRNG() { seedVal = 1; }
+	PRNG( size_t seed_ ) { seedVal = seed_ ? seed_ : 1; }
 	void seed( size_t seed_ ) { seedVal = seed_; }
 
 	/*FORCE_INLINE uint32_t rng32( uint32_t x )
