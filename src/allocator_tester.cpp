@@ -33,6 +33,7 @@
 
 #include "selector.h"
 #include "allocator_tester.h"
+#include <random>
 
 template<class Allocator>
 void* runRandomTest( void* params )
@@ -69,11 +70,14 @@ void runTest( TestStartupParamsAndResults* startupParams )
 	ThreadStartupParamsAndResults testParams[max_threads];
 	std::thread threads[ max_threads ];
 
+	std::random_device rd;
+
 	for ( size_t i=0; i<threadCount; ++i )
 	{
 		memcpy( testParams + i, startupParams, sizeof(TestStartupParams) );
 		testParams[i].threadID = i;
 		testParams[i].threadRes = startupParams->testRes->threadRes + i;
+		testParams[i].startupParams.rndSeed = rd(); // NOTE: one may want to put here just some constants for replay for debug purposes
 	}
 
 	// run threads
