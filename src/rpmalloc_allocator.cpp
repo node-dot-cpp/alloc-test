@@ -25,35 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Memory allocator tester -- selector
+ * Memory allocator tester -- rpmalloc allocator
  * 
  * v.1.00    Jun-22-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
 
-#ifndef SELECTOR_H
-#define SELECTOR_H
-
-// TODO:
-// (1) #include "my_allocator.h"
-// (2) define MyAllocatorT properly
-// (3) make sure other inclusions and/or definitions are removed or commented out :)
-
-#ifdef USE_RPMALLOC
-
 #include "rpmalloc_allocator.h"
-typedef RPMallocAllocatorForTest MyAllocatorT;
 
-#else
-
-#include "new_delete_allocator.h"
-typedef NewDeleteAllocatorForTest MyAllocatorT;
-
-#endif
-
-//#include "iib_allocator.h"
-//typedef IibmallocAllocatorForTest MyAllocatorT;
-
-
-#endif // SELECTOR_H
+std::atomic_bool RPMallocGuard::isInitialized(false);
