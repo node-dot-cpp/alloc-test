@@ -855,7 +855,7 @@ public:
 #elif defined USE_QUAD_EXP_BUCKET_SIZES
 #error "not implemented"
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 #elif defined(_M_X64)
 #ifdef USE_EXP_BUCKET_SIZES
@@ -895,7 +895,7 @@ public:
 		return static_cast<uint8_t>(ix);
 	}
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 #else
 #error Unknown 32/64 bits architecture
@@ -915,7 +915,7 @@ public:
 #elif defined USE_QUAD_EXP_BUCKET_SIZES
 #error "not implemented"
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 #elif defined(__x86_64__)
 #ifdef USE_EXP_BUCKET_SIZES
@@ -958,7 +958,7 @@ public:
 		return static_cast<uint8_t>(ix);
 	}
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 #else
 #error Unknown 32/64 bits architecture
@@ -1037,7 +1037,7 @@ public:
 #elif defined USE_QUAD_EXP_BUCKET_SIZES
 		size_t bucketSz = indexToBucketSizeQuarterExp( szidx );
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 		assert( bucketSz >= sizeof( void* ) );
 #ifdef USE_SOUNDING_PAGE_ADDRESS
@@ -1119,7 +1119,7 @@ public:
 #elif defined USE_QUAD_EXP_BUCKET_SIZES
 			uint8_t szidx = sizeToIndexQuarterExp( sz );
 #else
-#error "Undefined bucket size schema
+#error Undefined bucket size schema
 #endif
 			assert( szidx < BucketCount );
 			if ( buckets[szidx] )

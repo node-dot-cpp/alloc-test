@@ -49,25 +49,25 @@
 thread_local SerializableAllocatorBase g_AllocManager;
 
 
-// void* operator new(std::size_t count)
-// {
-// 	return g_AllocManager.allocate(count);
-// }
-// 
-// void* operator new[](std::size_t count)
-// {
-// 	return g_AllocManager.allocate(count);
-// }
-// 
-// void operator delete(void* ptr) noexcept
-// {
-// 	g_AllocManager.deallocate(ptr);
-// }
-// 
-// void operator delete[](void* ptr) noexcept
-// {
-// 	g_AllocManager.deallocate(ptr);
-// }
+void* operator new(std::size_t count)
+{
+	return g_AllocManager.allocate(count);
+}
+
+void* operator new[](std::size_t count)
+{
+	return g_AllocManager.allocate(count);
+}
+
+void operator delete(void* ptr) noexcept
+{
+	g_AllocManager.deallocate(ptr);
+}
+
+void operator delete[](void* ptr) noexcept
+{
+	g_AllocManager.deallocate(ptr);
+}
 
 #if __cplusplus >= 201703L
 

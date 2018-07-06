@@ -54,8 +54,8 @@ public:
 		g_AllocManager.initialize();
 		g_AllocManager.enable();
 	}
-	void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
-	void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+	void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
+	void deallocate( void* ptr ) { delete [] reinterpret_cast<uint8_t*>(ptr); }
 	void deinit()
 	{
 		g_AllocManager.deinitialize();

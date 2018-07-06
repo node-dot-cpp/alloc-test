@@ -47,13 +47,16 @@ typedef RPMallocAllocatorForTest MyAllocatorT;
 
 #else
 
-#include "new_delete_allocator.h"
-typedef NewDeleteAllocatorForTest MyAllocatorT;
+//#include "new_delete_allocator.h"
+//typedef NewDeleteAllocatorForTest MyAllocatorT;
 
 #endif
 
-//#include "iib_allocator.h"
-//typedef IibmallocAllocatorForTest MyAllocatorT;
+#include "iib_allocator.h"
+typedef IibmallocAllocatorForTest MyAllocatorT;
+
+//#include "iib_allocator_direct.h"
+//typedef IibmallocDirectAllocatorForTest MyAllocatorT;
 
 
 #endif // SELECTOR_H

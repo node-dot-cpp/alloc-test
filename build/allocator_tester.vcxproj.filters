@@ -65,6 +65,9 @@
     <ClInclude Include="..\src\iibmalloc\page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\iib_allocator_direct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\README.txt">
