@@ -62,10 +62,10 @@
     <ClInclude Include="..\src\iibmalloc\iibmalloc_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\iibmalloc\page_allocator.h">
+    <ClInclude Include="..\src\iib_allocator_direct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\iib_allocator_direct.h">
+    <ClInclude Include="..\src\iibmalloc\iibmalloc_page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -41,7 +41,7 @@
 #include <vector> // potentially, a temporary solution
 
 #include "iibmalloc_common.h"
-#include "page_allocator.h"
+#include "iibmalloc_page_allocator.h"
 
 
 class SerializableAllocatorBase;
@@ -788,7 +788,6 @@ protected:
 
 #ifdef USE_SOUNDING_PAGE_ADDRESS
 	typedef SoundingAddressPageAllocator<PageAllocatorWithCaching, BucketCountExp, reservation_size_exp, 4, 3> PageAllocatorT;
-//	typedef SoundingAddressPageAllocator<PageAllocatorNoCachingForTestPurposes, BucketCountExp, reservation_size_exp, 4> PageAllocatorT;
 	PageAllocatorT pageAllocator;
 #else
 	PageAllocatorWithCaching pageAllocator;

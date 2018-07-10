@@ -25,14 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Per-thread bucket allocator
+ * iibmalloc allocator
  * 
  * v.1.00    May-09-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
 
-#include "page_allocator.h"
+#include "iibmalloc_page_allocator.h"
 
 #include <cstdlib>
 #include <cstddef>
@@ -109,51 +109,94 @@ uint8_t* VirtualMemory::reserve(void* addr, size_t size)
 /*static*/
 void VirtualMemory::commit(uintptr_t addr, size_t size)
 {
+	// TODO: revise necessity
 	void* ptr = VirtualAlloc(reinterpret_cast<void*>(addr), size, MEM_COMMIT, PAGE_READWRITE);
 	assert(ptr);
-//	printf( "  allocating %zd\n", size );
 }
 
 /*static*/
 void VirtualMemory::decommit(uintptr_t addr, size_t size)
 {
+	// TODO: revise necessity
 	BOOL r = VirtualFree(reinterpret_cast<void*>(addr), size, MEM_DECOMMIT);
 	assert(r);
-//	printf( "deallocating                     %zd\n", size );
 }
 
 void* VirtualMemory::allocate(size_t size)
 {
-	void* ptr = VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (!ptr)
+	void* ret = VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	if ( ret != nullptr ) // hopefully, likely branch
+		return ret;
+	else
+	{
+		printf( "Reserving and commiting memory failed for size %zd (%zx), error = %d\n", size, size, GetLastError() );
 		throw std::bad_alloc();
-
-	return ptr;
+		return ret;
+	}
 }
 
 void VirtualMemory::deallocate(void* ptr, size_t size)
 {
-	bool OK = VirtualFree(ptr, 0, MEM_RELEASE);
-	assert( OK );
+	bool ret = VirtualFree(ptr, 0, MEM_RELEASE);
+	if ( ret ) // hopefully, likely branch
+		return;
+	else
+	{
+		printf( "Releasing memory failed for size %zd (%zx) at address 0x%zx, error = %d\n", size, size, (size_t)ptr, GetLastError() );
+		throw std::bad_alloc();
+		return;
+	}
 }
 
 
 void* VirtualMemory::AllocateAddressSpace(size_t size)
 {
-    return VirtualAlloc(NULL, size, MEM_RESERVE , PAGE_NOACCESS);
+    void* ret = VirtualAlloc(NULL, size, MEM_RESERVE , PAGE_NOACCESS);
+	if ( ret != nullptr ) // hopefully, likely branch
+		return ret;
+	else
+	{
+		printf( "Reserving memory failed for size %zd (%zx), error = %d\n", size, size, GetLastError() );
+		throw std::bad_alloc();
+		return ret;
+	}
 }
  
 void* VirtualMemory::CommitMemory(void* addr, size_t size)
 {
-    return VirtualAlloc(addr, size, MEM_COMMIT, PAGE_READWRITE);
+	void* ret = VirtualAlloc(addr, size, MEM_COMMIT, PAGE_READWRITE);
+	if ( ret != nullptr ) // hopefully, likely branch
+		return ret;
+	else
+	{
+		printf( "Commiting memory failed for size %zd (%zx) and addr 0x%zx, error = %d\n", size, size, (size_t)addr, GetLastError() );
+		throw std::bad_alloc();
+		return ret;
+	}
 }
  
 void VirtualMemory::DecommitMemory(void* addr, size_t size)
 {
-    VirtualFree((void*)addr, size, MEM_DECOMMIT);
+    BOOL ret = VirtualFree((void*)addr, size, MEM_DECOMMIT);
+	if ( ret ) // hopefully, likely branch
+		return;
+	else
+	{
+		printf( "Decommiting memory failed for size %zd (%zx) at address 0x%zx, error = %d\n", size, size, (size_t)addr, GetLastError() );
+		throw std::bad_alloc();
+		return;
+	}
 }
  
 void VirtualMemory::FreeAddressSpace(void* addr, size_t size)
 {
-    VirtualFree((void*)addr, 0, MEM_RELEASE);
+    BOOL ret = VirtualFree((void*)addr, 0, MEM_RELEASE);
+	if ( ret ) // hopefully, likely branch
+		return;
+	else
+	{
+		printf( "Releasing memory failed for size %zd (%zx) at address 0x%zx, error = %d\n", size, size, (size_t)addr, GetLastError() );
+		throw std::bad_alloc();
+		return;
+	}
 }

@@ -25,15 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
  * 
- * Per-thread bucket allocator
+ * iibmalloc allocator coomon defs and routines
  * 
  * v.1.00    May-09-2018    Initial release
  * 
  * -------------------------------------------------------------------------------*/
 
  
-#ifndef BUCKET_ALLOCATOR_COMMON_H
-#define BUCKET_ALLOCATOR_COMMON_H
+#ifndef IIBMALLOC_COMMON_H
+#define IIBMALLOC_COMMON_H
 
 #include <cstddef>
 #include <cinttypes>
@@ -130,4 +130,4 @@ uintptr_t alignUpExp(uintptr_t sz, uintptr_t alignmentExp)
 }
 
 
-#endif // BUCKET_ALLOCATOR_COMMON_H
+#endif // IIBMALLOC_COMMON_H

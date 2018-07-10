@@ -40,7 +40,7 @@
     <ClInclude Include="..\src\allocator_tester.h" />
     <ClInclude Include="..\src\iibmalloc\iibmalloc.h" />
     <ClInclude Include="..\src\iibmalloc\iibmalloc_common.h" />
-    <ClInclude Include="..\src\iibmalloc\page_allocator.h" />
+    <ClInclude Include="..\src\iibmalloc\iibmalloc_page_allocator.h" />
     <ClInclude Include="..\src\iib_allocator_direct.h" />
     <ClInclude Include="..\src\new_delete_allocator.h" />
     <ClInclude Include="..\src\iib_allocator.h" />
