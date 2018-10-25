@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------------
  * Copyright (c) 2018, OLogN Technologies AG
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the <organization> nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,11 +24,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * -------------------------------------------------------------------------------
- * 
+ *
  * Memory allocator tester
- * 
+ *
  * v.1.00    Jun-22-2018    Initial release
- * 
+ *
  * -------------------------------------------------------------------------------*/
 #ifndef ALLOCATOR_TESTER_H
 #define ALLOCATOR_TESTER_H
@@ -72,7 +72,7 @@ public:
 	}*/
 /*	FORCE_INLINE uint32_t rng32()
 	{
-		unsigned long long x = (seedVal += 7319936632422683443ULL);	
+		unsigned long long x = (seedVal += 7319936632422683443ULL);
 		x ^= x >> 32;
 		x *= c;
 		x ^= x >> 32;
@@ -202,7 +202,24 @@ size_t Pareto_80_20_6_Rand( const Pareto_80_20_6_Data& data, uint32_t rnum1, uin
 	uint32_t offsetInRange = rnum2 % rangeSize;
 	return data.offsets[ idx ] + offsetInRange;
 }
-
+#ifdef BIT_SIZE_64
+void fillSegmentWithRandomData(uint32_t* ptr, size_t sz, size_t reincarnation)
+{
+	PRNG rng(((uintptr_t)ptr) ^ ((uintptr_t)sz << 32) ^ reincarnation);
+	for (size_t i = 0; i < sz; ++i)
+		ptr[i] = rng.rng32();
+}
+void checkSegment(uint32_t* ptr, size_t sz, size_t reincarnation)
+{
+	PRNG rng(((uintptr_t)ptr) ^ ((uintptr_t)sz << 32) ^ reincarnation);
+	for (size_t i = 0; i < sz; ++i)
+		if (ptr[i] != rng.rng32())
+		{
+			printf("memcheck failed for ptr=%zd, size=%zd, reincarnation=%zd, from %zd\n", (size_t)(ptr), sz, reincarnation, i * 4);
+			throw std::bad_alloc();
+		}
+}
+#else
 void fillSegmentWithRandomData( uint8_t* ptr, size_t sz, size_t reincarnation )
 {
 	PRNG rng( ((uintptr_t)ptr) ^ ((uintptr_t)sz << 32) ^ reincarnation );
@@ -243,7 +260,7 @@ void checkSegment( uint8_t* ptr, size_t sz, size_t reincarnation )
 		}
 	}
 }
-
+#endif // BIT_SIZE_64
 template< class AllocatorUnderTest, MEM_ACCESS_TYPE mat>
 void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCount, size_t maxItems, size_t maxItemSizeExp, size_t threadID, size_t rnd_seed )
 {
@@ -281,7 +298,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 		uint32_t reincarnation;
 	};
 
-	TestBin* baseBuff = nullptr; 
+	TestBin* baseBuff = nullptr;
 	if constexpr ( !allocatorUnderTest.isFake() )
 		baseBuff = reinterpret_cast<TestBin*>( allocatorUnderTest.allocate( maxItems * sizeof(TestBin) ) );
 	else
@@ -308,7 +325,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 					if constexpr ( mat == MEM_ACCESS_TYPE::full )
 						memset( baseBuff[i*32+j].ptr, (uint8_t)sz, sz );
 					else
-					{ 
+					{
 						if constexpr ( mat == MEM_ACCESS_TYPE::single )
 							baseBuff[i*32+j].ptr[sz/2] = (uint8_t)sz;
 						else
@@ -443,7 +460,7 @@ void randomPos_RandomSize( AllocatorUnderTest& allocatorUnderTest, size_t iterCo
 	rss = getRss();
 	if ( rssMax < rss ) rssMax = rss;
 	allocatorUnderTest.getTestRes()->rssMax = rssMax;
-		
+
 	printf( "about to exit thread %zd (%zd operations performed) [ctr = %zd]...\n", threadID, iterCount, dummyCtr );
 };
 
